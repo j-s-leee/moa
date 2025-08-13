@@ -1,87 +1,63 @@
-# Welcome to React Router!
+# Routes
 
-A modern, production-ready template for building full-stack React applications using React Router.
+- 홈
+  - 이번달 현황 - 총 지출/수입/잔액등
+  - 공동목표
+    - 목표 추가 -> 목표 추가 페이지로 이동
+  - 최근 지출 내역
+    - 지출 추가 -> 지출 추가 페이지로 이동
+    - 더보기 -> 지출 페이지로 이동
+- 수입/지출
+  - 현황
+  - 입력
+    - 구분
+    - 카테고리
+    - 금액
+    - 내용 (선택)
+    - 날짜
+    - 사람
+    - 정기적인 항목인가요? - 매월 ? 정기 : 비정기
+      - 비정기 지출인 경우 예산 선택 가능
+- 예산
+  - 목록
+  - 입력
+    - 내용
+    - 금액
+    - 사람 (선택)
+    - 정기적인 항목인가요?
+- 저축
+  - 현황
+  - 입력
+    - 구분 - 예금/적금/투자
+    - 금액
+    - 내용 (선택)
+- 목표
+  - 현황
+  - 입력
+    - 내용
+    - 목표금액
+    - 시작금액
+    - 저축 - 저축 목록에서 다중 선택
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+# TODO
 
-## Features
-
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
-
-```bash
-npm install
-```
-
-### Development
-
-Start the development server with HMR:
-
-```bash
-npm run dev
-```
-
-Your application will be available at `http://localhost:5173`.
-
-## Building for Production
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+- transaction page add tab (income / expense)
+  - 탭나누면 drawer에서 selectbox 제거
+- budget page data table -> transaction page 데이터리스트 컴포넌트화후 교체
+- goals page goal-card 컴포넌트디자인 미니멀하게 수정
 
 ---
 
-Built with ❤️ using React Router.
+## profile
+
+## household
+
+household_id
+name
+created_by
+
+## goal
+
+## budget
+
+## monthly

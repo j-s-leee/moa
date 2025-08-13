@@ -5,10 +5,18 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteLoaderData,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { themeSessionResolver } from "./session.server";
+import {
+  PreventFlashOnWrongTheme,
+  ThemeProvider,
+  useTheme,
+} from "remix-themes";
+import { cn } from "./lib/utils";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -19,18 +27,24 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
+    href: "https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap",
+  },
+  {
+    rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
 ];
-
-export function Layout({ children }: { children: React.ReactNode }) {
+function InnerLayout({ children }: { children: React.ReactNode }) {
+  const [theme] = useTheme();
+  const data = useRouteLoaderData<typeof loader>("root");
   return (
-    <html lang="en">
+    <html lang="en" className={cn(theme)}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <PreventFlashOnWrongTheme ssrTheme={Boolean(data?.theme)} />
       </head>
       <body>
         {children}
@@ -38,6 +52,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  );
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const { getTheme } = await themeSessionResolver(request);
+  return {
+    theme: getTheme(),
+  };
+}
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  const data = useRouteLoaderData<typeof loader>("root");
+  return (
+    <ThemeProvider
+      specifiedTheme={data?.theme || null}
+      themeAction="/api/settings/theme"
+    >
+      <InnerLayout>{children}</InnerLayout>
+    </ThemeProvider>
   );
 }
 
