@@ -1,5 +1,12 @@
 import { cn, formatCurrency } from "~/lib/utils";
-import { Plus, Trash2, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Trash2,
+  Wallet,
+} from "lucide-react";
 import { useState } from "react";
 import {
   initialMonthlyIncomes,
@@ -17,6 +24,7 @@ import {
 import { generateId } from "~/lib/utils";
 import {
   Card,
+  CardAction,
   CardContent,
   CardFooter,
   CardHeader,
@@ -122,173 +130,38 @@ export default function ManagePage({ loaderData }: Route.ComponentProps) {
         </div>
       </Card>
 
-      {/* 월 수입 관리 */}
       <Card className="rounded-2xl shadow-none border">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">월 수입</h3>
-            <Button
-              onClick={() => setShowIncomeForm(!showIncomeForm)}
-              variant="secondary"
-              size="icon"
+        <CardContent>
+          <CardTitle className="flex items-center">
+            <Link
+              to={`/household/${householdId}/manage/income`}
+              className="font-bold text-primary flex items-center justify-between w-full"
             >
-              <Plus className="w-4 h-4" />
-            </Button>
+              <h3 className="text-lg font-semibold">월 고정 수입</h3>
+              <span className="flex items-center gap-1">
+                {formatCurrency(getTotalMonthlyIncome(monthlyIncomes))}
+                <ChevronRight />
+              </span>
+            </Link>
           </CardTitle>
-        </CardHeader>
-
-        {showIncomeForm && (
-          <div className="mb-4 p-4 rounded-xl">
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="수입 항목명"
-                value={newIncomeForm.name}
-                onChange={(e) =>
-                  setNewIncomeForm({ ...newIncomeForm, name: e.target.value })
-                }
-                className="w-full p-3 border rounded-lg"
-              />
-              <input
-                type="number"
-                placeholder="금액"
-                value={newIncomeForm.amount}
-                onChange={(e) =>
-                  setNewIncomeForm({
-                    ...newIncomeForm,
-                    amount: e.target.value,
-                  })
-                }
-                className="w-full p-3 border rounded-lg"
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  onClick={() => setShowIncomeForm(false)}
-                  variant="outline"
-                >
-                  취소
-                </Button>
-                <Button onClick={addIncome}>추가</Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <CardContent className="space-y-3">
-          {monthlyIncomes.map((income) => (
-            <div
-              key={income.id}
-              className="flex items-center justify-between p-3 rounded-lg border-none bg-muted/50 dark:bg-muted/20"
-            >
-              <div>
-                <div className="font-medium">{income.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {formatCurrency(income.amount)}
-                </div>
-              </div>
-              <button
-                onClick={() => deleteIncome(income.id)}
-                className="text-destructive"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-          <Separator />
         </CardContent>
-        <CardFooter className="flex justify-between items-center pt-2">
-          <span className="font-semibold">총 수입</span>
-          <span className="font-bold text-primary">
-            {formatCurrency(getTotalMonthlyIncome(monthlyIncomes))}
-          </span>
-        </CardFooter>
       </Card>
 
-      {/* 월 고정지출 관리 */}
       <Card className="rounded-2xl shadow-none border">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">월 고정지출</h3>
-            <Button
-              onClick={() => setShowExpenseForm(!showExpenseForm)}
-              variant="secondary"
-              size="icon"
+        <CardContent>
+          <CardTitle className="flex items-center">
+            <Link
+              to={`/household/${householdId}/manage/expense`}
+              className="font-bold text-primary flex items-center justify-between w-full"
             >
-              <Plus className="w-4 h-4" />
-            </Button>
+              <h3 className="text-lg font-semibold">월 고정 지출</h3>
+              <span className="flex items-center gap-1">
+                {formatCurrency(getTotalMonthlyExpenses(monthlyExpenses))}
+                <ChevronRight />
+              </span>
+            </Link>
           </CardTitle>
-        </CardHeader>
-
-        {showExpenseForm && (
-          <div className="mb-4 p-4 rounded-xl">
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="지출 항목명"
-                value={newExpenseForm.name}
-                onChange={(e) =>
-                  setNewExpenseForm({
-                    ...newExpenseForm,
-                    name: e.target.value,
-                  })
-                }
-                className="w-full p-3 border rounded-lg"
-              />
-              <input
-                type="number"
-                placeholder="금액"
-                value={newExpenseForm.amount}
-                onChange={(e) =>
-                  setNewExpenseForm({
-                    ...newExpenseForm,
-                    amount: e.target.value,
-                  })
-                }
-                className="w-full p-3 border rounded-lg"
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  onClick={() => setShowExpenseForm(false)}
-                  variant="outline"
-                >
-                  취소
-                </Button>
-                <Button onClick={addExpense} variant="default">
-                  추가
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <CardContent className="space-y-3">
-          {monthlyExpenses.map((expense) => (
-            <div
-              key={expense.id}
-              className="flex items-center justify-between p-3 rounded-lg border-none bg-muted/50 dark:bg-muted/20"
-            >
-              <div>
-                <div className="font-medium">{expense.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {formatCurrency(expense.amount)}
-                </div>
-              </div>
-              <button
-                onClick={() => deleteExpense(expense.id)}
-                className="text-destructive"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-          <Separator />
         </CardContent>
-        <CardFooter className="flex justify-between items-center pt-2">
-          <span className="font-semibold">총 지출</span>
-          <span className="font-bold text-destructive">
-            {formatCurrency(getTotalMonthlyExpenses(monthlyExpenses))}
-          </span>
-        </CardFooter>
       </Card>
 
       {/* 비정기지출 예산 관리 */}
