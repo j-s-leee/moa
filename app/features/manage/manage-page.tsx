@@ -1,30 +1,7 @@
 import { cn, formatCurrency } from "~/lib/utils";
-import {
-  ArrowRight,
-  ChevronRight,
-  Pencil,
-  Plus,
-  Trash2,
-  Wallet,
-} from "lucide-react";
-import { useState } from "react";
-import {
-  initialMonthlyIncomes,
-  initialMonthlyExpenses,
-  initialIrregularExpenses,
-  irregularCategories,
-  getTotalMonthlyIncome,
-  getTotalMonthlyExpenses,
-  type MonthlyIncome,
-  type MonthlyExpense,
-  getCategorySpent,
-  calculateMonthlySavingsPotential,
-  getTotalIrregularBudget,
-} from "~/lib/testData";
-import { generateId } from "~/lib/utils";
+import { ChevronRight, Plus, Wallet } from "lucide-react";
 import {
   Card,
-  CardAction,
   CardContent,
   CardFooter,
   CardHeader,
@@ -34,8 +11,9 @@ import { Button } from "~/common/components/ui/button";
 import { Progress } from "~/common/components/ui/progress";
 import { Separator } from "~/common/components/ui/separator";
 
-import { Link, useParams, type MetaFunction } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import type { Route } from "./+types/manage-page";
+import { getAccount, getBudgets } from "./queries";
 
 export const meta: MetaFunction = () => {
   return [
@@ -44,70 +22,29 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export const loader = async () => {
+interface Budget {
+  budget_id: number;
+  name: string;
+  budget_amount: number;
+  current_amount: number;
+}
+
+export const loader = async ({ params }: Route.LoaderArgs) => {
+  const { accountId } = params;
+  const account = await getAccount(accountId);
+  const budgets = await getBudgets(accountId);
+  const monthlyBudget =
+    budgets.reduce((acc, budget) => acc + budget.budget_amount, 0) / 12;
   return {
-    initialMonthlyIncomes,
-    initialMonthlyExpenses,
-    irregularCategories,
-    initialIrregularExpenses,
+    accountId,
+    account,
+    budgets,
+    monthlyBudget,
   };
 };
 
 export default function ManagePage({ loaderData }: Route.ComponentProps) {
-  const { accountId } = useParams();
-  const [monthlyIncomes, setMonthlyIncomes] = useState<MonthlyIncome[]>(
-    loaderData.initialMonthlyIncomes
-  );
-  const [monthlyExpenses, setMonthlyExpenses] = useState<MonthlyExpense[]>(
-    loaderData.initialMonthlyExpenses
-  );
-
-  const [newIncomeForm, setNewIncomeForm] = useState({
-    name: "",
-    amount: "",
-  });
-  const [newExpenseForm, setNewExpenseForm] = useState({
-    name: "",
-    amount: "",
-  });
-  const [showIncomeForm, setShowIncomeForm] = useState(false);
-  const [showExpenseForm, setShowExpenseForm] = useState(false);
-
-  const addIncome = () => {
-    if (newIncomeForm.name && newIncomeForm.amount) {
-      const newIncome: MonthlyIncome = {
-        id: generateId(),
-        name: newIncomeForm.name,
-        amount: parseInt(newIncomeForm.amount),
-        effectiveFrom: new Date().toISOString().split("T")[0],
-      };
-      loaderData.initialMonthlyIncomes.push(newIncome);
-      setNewIncomeForm({ name: "", amount: "" });
-      setShowIncomeForm(false);
-    }
-  };
-
-  const addExpense = () => {
-    if (newExpenseForm.name && newExpenseForm.amount) {
-      const newExpense: MonthlyExpense = {
-        id: generateId(),
-        name: newExpenseForm.name,
-        amount: parseInt(newExpenseForm.amount),
-        effectiveFrom: new Date().toISOString().split("T")[0],
-      };
-      loaderData.initialMonthlyExpenses.push(newExpense);
-      setNewExpenseForm({ name: "", amount: "" });
-      setShowExpenseForm(false);
-    }
-  };
-
-  const deleteIncome = (id: string) => {
-    setMonthlyIncomes(monthlyIncomes.filter((income) => income.id !== id));
-  };
-
-  const deleteExpense = (id: string) => {
-    setMonthlyExpenses(monthlyExpenses.filter((expense) => expense.id !== id));
-  };
+  const { accountId, account, budgets, monthlyBudget } = loaderData;
 
   return (
     <div className="space-y-6">
@@ -117,13 +54,7 @@ export default function ManagePage({ loaderData }: Route.ComponentProps) {
           <div>
             <h2 className="text-lg font-semibold mb-1">월 저축 가능액</h2>
             <div className="text-3xl font-bold">
-              {formatCurrency(
-                calculateMonthlySavingsPotential(
-                  loaderData.initialMonthlyIncomes,
-                  loaderData.initialMonthlyExpenses,
-                  loaderData.irregularCategories
-                )
-              )}
+              {formatCurrency(account.total_savings)}
             </div>
           </div>
           <Wallet className="w-8 h-8" />
@@ -139,7 +70,7 @@ export default function ManagePage({ loaderData }: Route.ComponentProps) {
             >
               <h3 className="text-lg font-semibold">월 고정 수입</h3>
               <span className="flex items-center gap-1">
-                {formatCurrency(getTotalMonthlyIncome(monthlyIncomes))}
+                {formatCurrency(account.total_income)}
                 <ChevronRight />
               </span>
             </Link>
@@ -156,7 +87,7 @@ export default function ManagePage({ loaderData }: Route.ComponentProps) {
             >
               <h3 className="text-lg font-semibold">월 고정 지출</h3>
               <span className="flex items-center gap-1">
-                {formatCurrency(getTotalMonthlyExpenses(monthlyExpenses))}
+                {formatCurrency(account.total_expense)}
                 <ChevronRight />
               </span>
             </Link>
@@ -178,26 +109,25 @@ export default function ManagePage({ loaderData }: Route.ComponentProps) {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {loaderData.irregularCategories.map((category) => {
-            const categorySpent = getCategorySpent(
-              category.id,
-              loaderData.initialIrregularExpenses
-            );
-            const remaining = category.annualBudget - categorySpent;
-            const usageRate = (categorySpent / category.annualBudget) * 100;
+          {budgets.map((budget: Budget) => {
+            const remaining = budget.budget_amount - budget.current_amount;
+            const usageRate =
+              (budget.current_amount / budget.budget_amount) * 100;
 
             return (
               <Card
-                key={category.id}
+                key={budget.budget_id}
                 className="w-full p-4 shadow-none rounded-lg text-left border-none bg-muted"
               >
-                <Link to={`/account/${accountId}/manage/budget/${category.id}`}>
+                <Link
+                  to={`/account/${accountId}/manage/budget/${budget.budget_id}`}
+                >
                   <CardContent className="p-0">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">{category.name}</span>
+                      <span className="font-medium">{budget.name}</span>
                       <span className="text-sm text-muted-foreground">
-                        {formatCurrency(categorySpent)} /{" "}
-                        {formatCurrency(category.annualBudget)}
+                        {formatCurrency(budget.current_amount)} /{" "}
+                        {formatCurrency(budget.budget_amount)}
                       </span>
                     </div>
                     <Progress
@@ -230,9 +160,7 @@ export default function ManagePage({ loaderData }: Route.ComponentProps) {
         <CardFooter className="flex justify-between items-center pt-2">
           <span className="font-semibold">월 평균 예산</span>
           <span className="font-bold text-primary">
-            {formatCurrency(
-              getTotalIrregularBudget(loaderData.irregularCategories) / 12
-            )}
+            {formatCurrency(monthlyBudget)}
           </span>
         </CardFooter>
       </Card>
