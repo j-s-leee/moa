@@ -18,36 +18,25 @@ import {
 import { FormInput } from "~/common/components/form-input";
 import type { Route } from "./+types/income-page";
 import { formatCurrency } from "~/lib/utils";
-import type { MonthlyIncome } from "~/lib/testData";
+import { getIncomes, getTotalIncome } from "./queries";
 
 export const loader = async ({ params }: Route.LoaderArgs) => {
-  const { householdId } = params;
-  const monthlyIncomes = [
-    {
-      id: "1",
-      name: "월급",
-      amount: 1000000,
-    },
-    {
-      id: "2",
-      name: "알바",
-      amount: 100000,
-    },
-  ];
-  const totalMonthlyIncome = monthlyIncomes.reduce(
-    (acc, income) => acc + income.amount,
-    0
-  );
-  return { monthlyIncomes, totalMonthlyIncome, householdId };
+  const { accountId } = params;
+  const incomes = await getIncomes(accountId);
+  const totalIncome = await getTotalIncome(accountId);
+
+  return { incomes, accountId, totalIncome };
 };
 
-export default function IncomePage({ loaderData }: Route.ComponentProps) {
-  const { monthlyIncomes, totalMonthlyIncome, householdId } = loaderData || {
-    monthlyIncomes: [],
-    totalMonthlyIncome: 0,
-    householdId: "",
-  };
+interface Income {
+  transaction_id: string;
+  note: string;
+  amount: number;
+  occurred_at: string;
+}
 
+export default function IncomePage({ loaderData }: Route.ComponentProps) {
+  const { incomes = [], accountId = "", totalIncome = 0 } = loaderData || {};
   const deleteIncome = (id: string) => {
     console.log(id);
   };
@@ -57,10 +46,10 @@ export default function IncomePage({ loaderData }: Route.ComponentProps) {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">
-            총 고정 수입 : {formatCurrency(totalMonthlyIncome)}
+            총 고정 수입 : {formatCurrency(totalIncome)}
           </h3>
           <Dialog>
-            <form action={`/household/${householdId}/manage/income`}>
+            <form action={`/account/${accountId}/manage/income`}>
               <DialogTrigger asChild>
                 <Button variant="secondary" size="icon">
                   <Plus className="w-4 h-4" />
@@ -101,20 +90,20 @@ export default function IncomePage({ loaderData }: Route.ComponentProps) {
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {monthlyIncomes &&
-          monthlyIncomes.map((income: MonthlyIncome) => (
+        {incomes &&
+          incomes.map((income: Income) => (
             <div
-              key={income.id}
+              key={income.transaction_id}
               className="flex items-center justify-between p-3 rounded-lg border-none bg-muted/50 dark:bg-muted/20"
             >
               <div>
-                <div className="font-medium">{income.name}</div>
+                <div className="font-medium">{income.note}</div>
                 <div className="text-sm text-muted-foreground">
                   {formatCurrency(income.amount)}
                 </div>
               </div>
               <button
-                onClick={() => deleteIncome(income.id)}
+                onClick={() => deleteIncome(income.transaction_id)}
                 className="text-destructive"
               >
                 <Trash2 className="w-4 h-4" />

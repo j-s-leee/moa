@@ -54,7 +54,7 @@ export const loader = async () => {
 };
 
 export default function ManagePage({ loaderData }: Route.ComponentProps) {
-  const { householdId } = useParams();
+  const { accountId } = useParams();
   const [monthlyIncomes, setMonthlyIncomes] = useState<MonthlyIncome[]>(
     loaderData.initialMonthlyIncomes
   );
@@ -134,7 +134,7 @@ export default function ManagePage({ loaderData }: Route.ComponentProps) {
         <CardContent>
           <CardTitle className="flex items-center">
             <Link
-              to={`/household/${householdId}/manage/income`}
+              to={`/account/${accountId}/manage/income`}
               className="font-bold text-primary flex items-center justify-between w-full"
             >
               <h3 className="text-lg font-semibold">월 고정 수입</h3>
@@ -151,7 +151,7 @@ export default function ManagePage({ loaderData }: Route.ComponentProps) {
         <CardContent>
           <CardTitle className="flex items-center">
             <Link
-              to={`/household/${householdId}/manage/expense`}
+              to={`/account/${accountId}/manage/expense`}
               className="font-bold text-primary flex items-center justify-between w-full"
             >
               <h3 className="text-lg font-semibold">월 고정 지출</h3>
@@ -169,7 +169,7 @@ export default function ManagePage({ loaderData }: Route.ComponentProps) {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">연간 비정기지출 예산</h3>
-            <Link to={`/household/${householdId}/manage/budget/add`}>
+            <Link to={`/account/${accountId}/manage/budget/add`}>
               <Button variant="secondary" size="icon">
                 <Plus className="w-4 h-4" />
               </Button>
@@ -191,9 +191,7 @@ export default function ManagePage({ loaderData }: Route.ComponentProps) {
                 key={category.id}
                 className="w-full p-4 shadow-none rounded-lg text-left border-none bg-muted"
               >
-                <Link
-                  to={`/household/${householdId}/manage/budget/${category.id}`}
-                >
+                <Link to={`/account/${accountId}/manage/budget/${category.id}`}>
                   <CardContent className="p-0">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium">{category.name}</span>

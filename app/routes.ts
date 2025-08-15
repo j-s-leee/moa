@@ -13,7 +13,7 @@ export default [
 
   index("features/home/home-page.tsx"),
   route("login", "features/login/login-page.tsx"),
-  ...prefix("/household/:householdId", [
+  ...prefix("/account/:accountId", [
     layout("common/components/history-back-layout.tsx", [
       route("manage/budget/add", "features/manage/budget-add-page.tsx"),
       route("manage/budget/:budgetId", "features/manage/budget-page.tsx"),
