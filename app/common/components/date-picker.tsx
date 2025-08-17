@@ -18,15 +18,17 @@ export function DatePicker({
   name,
   placeholder,
   bgColor,
+  defaultDate,
 }: {
   label: string;
   id: string;
   name: string;
   placeholder: string;
   bgColor?: string;
+  defaultDate?: Date;
 }) {
   const [open, setOpen] = React.useState(false);
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<Date | undefined>(defaultDate);
 
   return (
     <div className="flex flex-col gap-3">
