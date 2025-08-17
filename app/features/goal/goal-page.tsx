@@ -13,6 +13,8 @@ import { FormInput } from "~/common/components/form-input";
 import { DatePicker } from "~/common/components/date-picker";
 import type { Route } from "./+types/goal-page";
 import type { MetaFunction } from "react-router";
+import { getSavingsGoal } from "./queries";
+import { getAccount } from "../manage/queries";
 
 export const meta: MetaFunction = () => {
   return [
@@ -21,12 +23,15 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export const loader = async () => {
+export const loader = async ({ params }: Route.LoaderArgs) => {
+  const savingsGoal = await getSavingsGoal(params.accountId);
+  const account = await getAccount(params.accountId);
   return {
     initialMonthlyIncomes,
     initialMonthlyExpenses,
     irregularCategories,
     savingsGoal,
+    account,
   };
 };
 
@@ -34,14 +39,11 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
   const [editGoal, setEditGoal] = useState(false);
   const [tempGoal, setTempGoal] = useState(loaderData.savingsGoal);
 
-  const monthlySavingsPotential = calculateMonthlySavingsPotential(
-    loaderData.initialMonthlyIncomes,
-    loaderData.initialMonthlyExpenses,
-    loaderData.irregularCategories
-  );
   const remainingGoal =
-    loaderData.savingsGoal.targetAmount - loaderData.savingsGoal.currentAmount;
-  const monthsToGoal = Math.ceil(remainingGoal / monthlySavingsPotential);
+    loaderData.savingsGoal.goal_amount - loaderData.savingsGoal.current_amount;
+  const monthsToGoal = Math.ceil(
+    remainingGoal / loaderData.account.total_savings
+  );
 
   const saveGoal = () => {
     setEditGoal(false);
@@ -66,24 +68,24 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
             <div>
               <div className="text-sm text-indigo-100 mb-1">목표 금액</div>
               <div className="text-2xl font-bold">
-                {formatCurrency(loaderData.savingsGoal.targetAmount)}
+                {formatCurrency(loaderData.savingsGoal.goal_amount)}
               </div>
             </div>
             <div>
               <div className="text-sm text-indigo-100 mb-1">현재 저축액</div>
               <div className="text-xl font-semibold">
-                {formatCurrency(loaderData.savingsGoal.currentAmount)}
+                {formatCurrency(loaderData.savingsGoal.current_amount)}
               </div>
             </div>
-            {loaderData.savingsGoal.deadline && (
+            {loaderData.savingsGoal.goal_date && (
               <div>
                 <div className="text-sm text-indigo-100 mb-1">
                   목표 달성 희망일
                 </div>
                 <div className="text-lg">
-                  {new Date(loaderData.savingsGoal.deadline).toLocaleDateString(
-                    "ko-KR"
-                  )}
+                  {new Date(
+                    loaderData.savingsGoal.goal_date
+                  ).toLocaleDateString("ko-KR")}
                 </div>
               </div>
             )}
@@ -100,11 +102,11 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
               <FormInput
                 label="목표 금액"
                 type="number"
-                value={tempGoal.targetAmount}
+                value={tempGoal.goal_amount}
                 onChange={(e) =>
                   setTempGoal({
                     ...tempGoal,
-                    targetAmount: parseInt(e.target.value) || 0,
+                    goal_amount: parseInt(e.target.value) || 0,
                   })
                 }
                 className="w-full"
@@ -114,11 +116,11 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
               <FormInput
                 label="현재 저축액"
                 type="number"
-                value={tempGoal.currentAmount}
+                value={tempGoal.current_amount}
                 onChange={(e) =>
                   setTempGoal({
                     ...tempGoal,
-                    currentAmount: parseInt(e.target.value) || 0,
+                    current_amount: parseInt(e.target.value) || 0,
                   })
                 }
                 className="w-full"
@@ -129,6 +131,9 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
                 label="목표 달성 예정일 (선택사항)"
                 id="deadline"
                 name="deadline"
+                defaultDate={
+                  tempGoal.goal_date ? new Date(tempGoal.goal_date) : undefined
+                }
                 placeholder="목표 달성 예정일 (선택사항)"
                 bgColor="bg-transparent"
               />
@@ -159,7 +164,7 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
           <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
             <span className="text-primary/90">월 저축 가능액</span>
             <span className="font-semibold text-blue-600 dark:text-blue-400">
-              {formatCurrency(monthlySavingsPotential)}
+              {formatCurrency(loaderData.account.total_savings)}
             </span>
           </div>
 
@@ -190,13 +195,17 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
                 월 10만원 절약 시
               </span>
               <span className="font-semibold">
-                {Math.ceil(remainingGoal / (monthlySavingsPotential + 100000))}
+                {Math.ceil(
+                  remainingGoal / (loaderData.account.total_savings + 100000)
+                )}
                 개월
               </span>
             </div>
             <div className="text-xs text-emerald-600 dark:text-emerald-400">
               {monthsToGoal -
-                Math.ceil(remainingGoal / (monthlySavingsPotential + 100000))}
+                Math.ceil(
+                  remainingGoal / (loaderData.account.total_savings + 100000)
+                )}
               개월 단축
             </div>
           </div>
@@ -207,13 +216,17 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
                 월 20만원 절약 시
               </span>
               <span className="font-semibold">
-                {Math.ceil(remainingGoal / (monthlySavingsPotential + 200000))}
+                {Math.ceil(
+                  remainingGoal / (loaderData.account.total_savings + 200000)
+                )}
                 개월
               </span>
             </div>
             <div className="text-xs text-emerald-600 dark:text-emerald-400">
               {monthsToGoal -
-                Math.ceil(remainingGoal / (monthlySavingsPotential + 200000))}
+                Math.ceil(
+                  remainingGoal / (loaderData.account.total_savings + 200000)
+                )}
               개월 단축
             </div>
           </div>
@@ -224,13 +237,17 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
                 월 50만원 절약 시
               </span>
               <span className="font-semibold">
-                {Math.ceil(remainingGoal / (monthlySavingsPotential + 500000))}
+                {Math.ceil(
+                  remainingGoal / (loaderData.account.total_savings + 500000)
+                )}
                 개월
               </span>
             </div>
             <div className="text-xs text-emerald-600 dark:text-emerald-400">
               {monthsToGoal -
-                Math.ceil(remainingGoal / (monthlySavingsPotential + 500000))}
+                Math.ceil(
+                  remainingGoal / (loaderData.account.total_savings + 500000)
+                )}
               개월 단축
             </div>
           </div>
