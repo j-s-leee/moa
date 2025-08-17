@@ -1,7 +1,3 @@
-"use client";
-
-import * as React from "react";
-
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -21,54 +17,19 @@ import {
 import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+
+interface Account {
+  account_id: string;
+  name: string;
+}
 
 export function NavSecondary({
   items,
-  onItemChange,
-  onLinkClick,
   ...props
 }: {
-  items: {
-    title: string;
-    id: string;
-  }[];
-  onItemChange?: (id: string, newTitle: string) => void;
-  onLinkClick?: () => void;
+  items: Account[];
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const { isMobile } = useSidebar();
-  const [editingId, setEditingId] = React.useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = React.useState("");
-
-  const handleEditStart = (id: string, currentTitle: string) => {
-    setEditingId(id);
-    setEditingTitle(currentTitle);
-  };
-
-  const handleEditComplete = () => {
-    if (editingId && editingTitle.trim() && onItemChange) {
-      onItemChange(editingId, editingTitle.trim());
-    }
-    setEditingId(null);
-    setEditingTitle("");
-  };
-
-  const handleEditCancel = () => {
-    setEditingId(null);
-    setEditingTitle("");
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleEditComplete();
-    } else if (e.key === "Escape") {
-      handleEditCancel();
-    }
-  };
-
-  const handleLinkClick = () => {
-    onLinkClick?.();
-  };
 
   return (
     <SidebarGroup {...props}>
@@ -76,31 +37,12 @@ export function NavSecondary({
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
+            <SidebarMenuItem key={item.account_id}>
               <div className="flex w-full items-center">
-                <SidebarMenuButton
-                  asChild={editingId !== item.id}
-                  className="flex-1"
-                >
-                  {editingId === item.id ? (
-                    <div className="flex w-full">
-                      <Input
-                        value={editingTitle}
-                        onChange={(e) => setEditingTitle(e.target.value)}
-                        onBlur={handleEditComplete}
-                        onKeyDown={handleKeyDown}
-                        className="h-8 text-sm"
-                        autoFocus
-                      />
-                    </div>
-                  ) : (
-                    <Link
-                      to={`/household/${item.id}/dashboard`}
-                      onClick={handleLinkClick}
-                    >
-                      <span>{item.title}</span>
-                    </Link>
-                  )}
+                <SidebarMenuButton className="flex-1">
+                  <Link to={`/account/${item.account_id}/dashboard`}>
+                    <span>{item.name}</span>
+                  </Link>
                 </SidebarMenuButton>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -118,9 +60,7 @@ export function NavSecondary({
                     align={isMobile ? "end" : "start"}
                     className="min-w-56 rounded-lg"
                   >
-                    <DropdownMenuItem
-                      onClick={() => handleEditStart(item.id, item.title)}
-                    >
+                    <DropdownMenuItem>
                       <Pencil className="mr-2 h-4 w-4" />
                       <span>이름 바꾸기</span>
                     </DropdownMenuItem>
