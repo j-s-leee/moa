@@ -24,17 +24,18 @@ import {
 } from "~/common/components/ui/dialog";
 import type { Route } from "./+types/budget-page";
 import { z } from "zod";
+import { getBudget } from "./queries";
 
 export const meta: Route.MetaFunction = ({ data }: Route.MetaArgs) => {
   return [
-    { title: `${data?.category?.name || "Budget"} | MOA` },
+    { title: `${data?.budget.name || "Budget"} | MOA` },
     { name: "description", content: "Budget page" },
   ];
 };
 
 const paramSchema = z.object({
-  budgetId: z.string(),
-  householdId: z.string(),
+  budgetId: z.coerce.number(),
+  accountId: z.string(),
 });
 
 export const loader = async ({ params }: Route.LoaderArgs) => {
@@ -48,38 +49,35 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
       { status: 400 }
     );
   }
-  const { budgetId, householdId } = parsedParams;
+  const { budgetId, accountId } = parsedParams;
+  const budget = await getBudget(budgetId);
   return {
     initialIrregularExpenses,
     irregularCategories,
     initialMonthlyIncomes,
     initialMonthlyExpenses,
     budgetId,
-    householdId,
-    category: irregularCategories.find((category) => category.id === budgetId),
+    accountId,
+    budget,
   };
 };
 
 export default function BudgetPage({ loaderData }: Route.ComponentProps) {
-  const category = loaderData.category!;
-  const categorySpent = getCategorySpent(
-    loaderData.budgetId!,
-    loaderData.initialIrregularExpenses
-  );
-  const usageRate = (categorySpent / category.annualBudget) * 100;
-  const remaining = category.annualBudget - categorySpent;
+  const { budget } = loaderData;
+  const usageRate = (budget.current_amount / budget.budget_amount) * 100;
+  const remaining = budget.budget_amount - budget.current_amount;
 
   return (
     <div className="flex flex-col h-screen space-y-4">
-      <h3 className="font-semibold text-lg">{category.name} 지출 내역</h3>
+      <h3 className="font-semibold text-lg">{budget.name} 지출 내역</h3>
       <div className="flex flex-col space-y-4 flex-1 overflow-hidden">
         <Card className="w-full p-4 rounded-lg text-left border">
           <CardContent className="p-0">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-medium">{category.name}</span>
+              <span className="font-medium">{budget.name}</span>
               <span className="text-sm text-muted-foreground">
-                {formatCurrency(categorySpent)} /{" "}
-                {formatCurrency(category.annualBudget)}
+                {formatCurrency(budget.current_amount)} /{" "}
+                {formatCurrency(budget.budget_amount)}
               </span>
             </div>
             <Progress
@@ -138,33 +136,27 @@ export default function BudgetPage({ loaderData }: Route.ComponentProps) {
 
         <h3 className="font-semibold">
           지출 내역(
-          {
-            loaderData.initialIrregularExpenses.filter(
-              (expense) => expense.categoryId === category.id
-            ).length
-          }
+          {budget.budget_expenses.length}
           건)
         </h3>
         <div className="space-y-3 overflow-auto flex-1">
-          {loaderData.initialIrregularExpenses
-            .filter((expense) => expense.categoryId === category.id)
-            .map((expense) => (
-              <div
-                key={expense.id}
-                className="flex items-center justify-between p-3 rounded-lg border-none bg-muted/60 dark:bg-muted/80"
-              >
-                <div>
-                  <div className="font-medium">{expense.description}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {formatCurrency(expense.amount)} •{" "}
-                    {new Date(expense.date).toLocaleDateString("ko-KR")}
-                  </div>
+          {budget.budget_expenses.map((expense) => (
+            <div
+              key={expense.budget_expense_id}
+              className="flex items-center justify-between p-3 rounded-lg border-none bg-muted/60 dark:bg-muted/80"
+            >
+              <div>
+                <div className="font-medium">{expense.note}</div>
+                <div className="text-sm text-muted-foreground">
+                  {formatCurrency(expense.amount)} •{" "}
+                  {new Date(expense.occurred_at).toLocaleDateString("ko-KR")}
                 </div>
-                <button onClick={() => {}} className="text-destructive">
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </div>
-            ))}
+              <button onClick={() => {}} className="text-destructive">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
