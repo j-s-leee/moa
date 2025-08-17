@@ -1,21 +1,27 @@
 import { formatCurrency } from "~/lib/utils";
+
 import {
-  initialMonthlyIncomes,
-  initialMonthlyExpenses,
-  irregularCategories,
-  savingsGoal,
-  calculateMonthlySavingsPotential,
-  getCategorySpent,
-  getTotalMonthlyIncome,
-  calculateMonthsToGoal,
-  getTotalIrregularBudget,
-  getTotalMonthlyExpenses,
-  initialIrregularExpenses,
-} from "~/lib/testData";
-import { Card } from "~/common/components/ui/card";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "~/common/components/ui/card";
 import { Progress } from "~/common/components/ui/progress";
 import type { Route } from "./+types/analysis-page";
 import type { MetaFunction } from "react-router";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from "~/common/components/ui/chart";
+import { Pie, PieChart } from "recharts";
+import { getAccount, getBudgets } from "../manage/queries";
+import { getSavingsGoal } from "../goal/queries";
+import { DateTime } from "luxon";
 
 export const meta: MetaFunction = () => {
   return [
@@ -24,77 +30,93 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export const loader = async () => {
+export const loader = async ({ params }: Route.LoaderArgs) => {
+  const account = await getAccount(params.accountId);
+  const budgets = await getBudgets(params.accountId);
+  const goals = await getSavingsGoal(params.accountId);
   return {
-    initialMonthlyIncomes,
-    initialMonthlyExpenses,
-    irregularCategories,
-    savingsGoal,
-    initialIrregularExpenses,
+    account,
+    budgets,
+    goals,
   };
 };
 
 export default function AnalysisPage({ loaderData }: Route.ComponentProps) {
-  const monthlySavingsPotential = calculateMonthlySavingsPotential(
-    loaderData.initialMonthlyIncomes,
-    loaderData.initialMonthlyExpenses,
-    loaderData.irregularCategories
+  const { account, budgets, goals } = loaderData;
+  const totalBudget = Math.round(
+    budgets.reduce((acc, budget) => acc + budget.budget_amount, 0) / 12
   );
-  const totalMonthlyIncome = getTotalMonthlyIncome(
-    loaderData.initialMonthlyIncomes
+
+  const monthsToGoal = Math.ceil(
+    (goals.goal_amount - goals.current_amount) / account.total_savings
   );
-  const totalMonthlyExpenses = getTotalMonthlyExpenses(
-    loaderData.initialMonthlyExpenses
-  );
-  const monthlyIrregularBudget = getTotalIrregularBudget(
-    loaderData.irregularCategories
-  );
-  const monthsToGoal = calculateMonthsToGoal(
-    loaderData.savingsGoal,
-    monthlySavingsPotential
-  );
+
+  const chartData = [
+    {
+      label: "expense",
+      value: account.total_expense,
+      fill: "var(--chart-1)",
+    },
+    {
+      label: "irregular",
+      value: totalBudget,
+      fill: "var(--chart-2)",
+    },
+    {
+      label: "savings",
+      value: account.total_savings,
+      fill: "var(--chart-3)",
+    },
+  ];
+  const chartConfig = {
+    expense: {
+      color: "hsl(var(--chart-1))",
+      label: "고정지출",
+    },
+    irregular: {
+      color: "var(--chart-2)",
+      label: "비정기지출",
+    },
+    savings: {
+      color: "var(--chart-3)",
+      label: "저축",
+    },
+  } satisfies ChartConfig;
 
   return (
-    <div className="space-y-6">
-      {/* 재정 건강도 */}
-      <Card className="p-6 rounded-2xl shadow-sm border">
-        <h3 className="text-lg font-semibold">재정 건강도</h3>
-
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">저축률</span>
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-              {((monthlySavingsPotential / totalMonthlyIncome) * 100).toFixed(
-                1
-              )}
-              %
-            </span>
+    <div className="space-y-4">
+      <Card className="flex flex-col gap-2">
+        <CardHeader className="items-center pb-0">
+          <CardTitle>재정 건강도</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 pb-0">
+          <ChartContainer
+            config={chartConfig}
+            className="mx-auto aspect-square max-h-[300px]"
+          >
+            <PieChart>
+              <Pie data={chartData} dataKey="value" nameKey="label" />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent labelKey="label" hideLabel />}
+              />
+              <ChartLegend
+                content={<ChartLegendContent nameKey="label" />}
+                className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center"
+              />
+            </PieChart>
+          </ChartContainer>
+        </CardContent>
+        <CardFooter>
+          <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-950 rounded-lg">
+            <div className="text-sm text-emerald-600 dark:text-emerald-400">
+              💡 <strong>권장 저축률은 20% 이상입니다.</strong>
+              {(account.total_savings / account.total_income) * 100 >= 20
+                ? " 훌륭한 저축률을 유지하고 있어요!"
+                : " 저축률을 높여보는 것을 고려해보세요."}
+            </div>
           </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">고정지출 비율</span>
-            <span className="font-semibold">
-              {((totalMonthlyExpenses / totalMonthlyIncome) * 100).toFixed(1)}%
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">비정기지출 비율</span>
-            <span className="font-semibold text-purple-600 dark:text-purple-400">
-              {((monthlyIrregularBudget / totalMonthlyIncome) * 100).toFixed(1)}
-              %
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-950 rounded-lg">
-          <div className="text-sm text-emerald-600 dark:text-emerald-400">
-            💡 <strong>권장 저축률은 20% 이상입니다.</strong>
-            {(monthlySavingsPotential / totalMonthlyIncome) * 100 >= 20
-              ? " 훌륭한 저축률을 유지하고 있어요!"
-              : " 저축률을 높여보는 것을 고려해보세요."}
-          </div>
-        </div>
+        </CardFooter>
       </Card>
 
       {/* 월별 예상 저축 추이 */}
@@ -105,10 +127,10 @@ export default function AnalysisPage({ loaderData }: Route.ComponentProps) {
           {Array.from({ length: Math.min(12, monthsToGoal) }, (_, i) => {
             const month = i + 1;
             const projectedAmount =
-              loaderData.savingsGoal.currentAmount +
-              monthlySavingsPotential * month;
+              account.total_savings +
+              (account.total_income - account.total_expense) * month;
             const progressRate =
-              (projectedAmount / loaderData.savingsGoal.targetAmount) * 100;
+              (projectedAmount / account.total_savings) * 100;
 
             return (
               <div key={month} className="flex items-center space-x-3">
@@ -133,23 +155,20 @@ export default function AnalysisPage({ loaderData }: Route.ComponentProps) {
         <h3 className="text-lg font-semibold">비정기 지출 분석</h3>
 
         <div className="space-y-4">
-          {loaderData.irregularCategories.map((category) => {
-            const categorySpent = getCategorySpent(
-              category.id,
-              loaderData.initialIrregularExpenses
-            );
-            const monthlyAverage = categorySpent / 7; // 7개월 기준 (가정)
+          {budgets.map((budget) => {
+            const categorySpent = budget.current_amount;
+            const monthlyAverage = categorySpent / DateTime.now().month;
             const projectedYearly = monthlyAverage * 12;
-            const isOverBudget = projectedYearly > category.annualBudget;
+            const isOverBudget = projectedYearly > budget.budget_amount;
 
             return (
               <div
-                key={category.id}
+                key={budget.budget_id}
                 className="p-4 border rounded-lg dark:bg-muted-foreground/10"
               >
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium text-primary/90">
-                    {category.name}
+                    {budget.name}
                   </span>
                   <span
                     className={`text-sm ${
@@ -174,7 +193,7 @@ export default function AnalysisPage({ loaderData }: Route.ComponentProps) {
                   >
                     예상 {isOverBudget ? "초과" : "절약"}:{" "}
                     {formatCurrency(
-                      Math.abs(category.annualBudget - projectedYearly)
+                      Math.abs(budget.budget_amount - projectedYearly)
                     )}
                   </div>
                 </div>
