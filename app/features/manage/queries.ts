@@ -55,3 +55,16 @@ export const getBudgets = async (accountId: string) => {
   if (error) throw new Error(error.message);
   return data;
 };
+
+export const getBudget = async (budgetId: number) => {
+  const { data, error } = await supabase
+    .from("budgets")
+    .select(
+      `budget_id, name, budget_amount, current_amount, budget_expenses(budget_expense_id, amount, note, occurred_at)`
+    )
+    .eq("budget_id", budgetId)
+    .single();
+  if (error) throw new Error(error.message);
+  console.log(data);
+  return data;
+};

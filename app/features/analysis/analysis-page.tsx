@@ -127,10 +127,9 @@ export default function AnalysisPage({ loaderData }: Route.ComponentProps) {
           {Array.from({ length: Math.min(12, monthsToGoal) }, (_, i) => {
             const month = i + 1;
             const projectedAmount =
-              account.total_savings +
+              goals.current_amount +
               (account.total_income - account.total_expense) * month;
-            const progressRate =
-              (projectedAmount / account.total_savings) * 100;
+            const progressRate = (projectedAmount / goals.goal_amount) * 100;
 
             return (
               <div key={month} className="flex items-center space-x-3">
