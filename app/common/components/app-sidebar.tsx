@@ -1,79 +1,35 @@
-"use client";
-
-import * as React from "react";
-import {
-  AudioWaveform,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  HandCoins,
-  LayoutDashboard,
-  List,
-  Map,
-  Pen,
-  PieChart,
-  Settings,
-  SquarePen,
-  Target,
-  Users,
-  Wallet,
-} from "lucide-react";
-import { useParams } from "react-router";
+import { List, Settings, SquarePen } from "lucide-react";
 
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-  useSidebar,
 } from "~/common/components/ui/sidebar";
 
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
-import { SidebarFooter, SidebarRail, SidebarSeparator } from "./ui/sidebar";
-import { useLocation } from "react-router";
+import { SidebarFooter, SidebarRail } from "./ui/sidebar";
 import { NavSecondary } from "./nav-secondary";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { householdId } = useParams();
-  const { pathname } = useLocation();
-  const { isMobile, toggleSidebar } = useSidebar();
+interface Account {
+  account_id: string;
+  name: string;
+}
 
-  // navSecondary 데이터를 state로 관리
-  const [navSecondary, setNavSecondary] = React.useState([
-    {
-      title: "부부 가계부",
-      id: "couple",
-    },
-    {
-      title: "가족 가계부",
-      id: "family",
-    },
-    {
-      title: "개인 가계부",
-      id: "personal",
-    },
-  ]);
+interface Profile {
+  name: string;
+  email: string | null;
+}
 
-  // 항목 이름 변경 핸들러
-  const handleItemChange = (id: string, newTitle: string) => {
-    setNavSecondary((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, title: newTitle } : item))
-    );
-  };
-
-  // 링크 클릭시 사이드바 닫기
-  const handleLinkClick = () => {
-    if (isMobile) {
-      toggleSidebar();
-    }
-  };
-
+export function AppSidebar({
+  accounts,
+  profile,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  accounts: Account[];
+  profile: Profile;
+}) {
   const data = {
-    user: {
-      name: "j-s-leee",
-      email: "j-s-leee@example.com",
-      avatar: "https://github.com/j-s-leee.png",
-    },
     navMain: [
       {
         title: "새 가계부",
@@ -113,15 +69,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <span className="text-2xl font-bold">MOA</span>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} onLinkClick={handleLinkClick} />
-        <NavSecondary
-          items={navSecondary}
-          onItemChange={handleItemChange}
-          onLinkClick={handleLinkClick}
-        />
+        <NavMain items={data.navMain} />
+        <NavSecondary items={accounts} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={profile} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
