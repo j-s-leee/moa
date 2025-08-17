@@ -1,4 +1,4 @@
-create function public.handle_new_user()
+create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
@@ -7,7 +7,7 @@ as $$
 begin
   if new.raw_app_meta_data is not null then
     if new.raw_app_meta_data ? 'provider' AND new.raw_app_meta_data ->> 'provider' = 'email' then
-      insert into public.profiles (profile_id, name) values (new.id, 'Anonymous');
+      insert into public.profiles (profile_id, name, email) values (new.id, 'Anonymous', new.email);
     end if;
   end if;
   return new;

@@ -42,7 +42,7 @@ const navItems: NavItem[] = [
 export default function BottomNav() {
   const location = useLocation();
   const pathSegments = location.pathname.split("/");
-  const householdId = pathSegments[2];
+  const accountId = pathSegments[2];
   const currentPath = pathSegments[3] || "";
 
   return (
@@ -50,7 +50,7 @@ export default function BottomNav() {
       <div className="grid h-16 grid-cols-4 items-center justify-around px-2">
         {navItems.map((item) => {
           const isActive = currentPath === item.href.replace("/", "");
-          const href = `/household/${householdId}${item.href}`;
+          const href = `/account/${accountId}${item.href}`;
 
           return (
             <Link
