@@ -14,11 +14,11 @@ export default [
   index("features/home/home-page.tsx"),
   route("login", "features/login/login-page.tsx"),
   ...prefix("/account/:accountId", [
-    layout("common/components/history-back-layout.tsx", [
-      route("manage/budget/add", "features/manage/budget-add-page.tsx"),
-      route("manage/budget/:budgetId", "features/manage/budget-page.tsx"),
-      route("manage/income", "features/manage/income-page.tsx"),
-      route("manage/expense", "features/manage/expense-page.tsx"),
+    ...prefix("manage", [
+      route("budget/add", "features/manage/budget-add-page.tsx"),
+      route("budget/:budgetId", "features/manage/budget-page.tsx"),
+      route("income", "features/manage/income-page.tsx"),
+      route("expense", "features/manage/expense-page.tsx"),
     ]),
     layout("common/components/bottom-nav-sidebar-layout.tsx", [
       route("dashboard", "features/dashboard/dashboard-page.tsx"),

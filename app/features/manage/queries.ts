@@ -1,4 +1,5 @@
 import supabase from "~/supa-client";
+import { PAGE_SIZE } from "./constants";
 
 export const getTotalIncome = async (accountId: string) => {
   const { data, error } = await supabase
@@ -59,12 +60,38 @@ export const getBudgets = async (accountId: string) => {
 export const getBudget = async (budgetId: number) => {
   const { data, error } = await supabase
     .from("budgets")
-    .select(
-      `budget_id, name, budget_amount, current_amount, budget_expenses(budget_expense_id, amount, note, occurred_at)`
-    )
+    .select("budget_id, name, budget_amount, current_amount")
     .eq("budget_id", budgetId)
     .single();
   if (error) throw new Error(error.message);
-  console.log(data);
   return data;
+};
+
+export const getBudgetExpenses = async ({
+  budgetId,
+  page,
+}: {
+  budgetId: number;
+  page: number;
+}) => {
+  const offset = (page - 1) * PAGE_SIZE;
+
+  const { data, error } = await supabase
+    .from("budget_expenses")
+    .select("budget_expense_id, amount, note, occurred_at")
+    .eq("budget_id", budgetId)
+    .order("occurred_at", { ascending: false })
+    .range(offset, offset + PAGE_SIZE - 1);
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+export const getBudgetExpensesCount = async (budgetId: number) => {
+  const { count, error } = await supabase
+    .from("budget_expenses")
+    .select("budget_expense_id", { count: "exact", head: true })
+    .eq("budget_id", budgetId);
+  if (error) throw new Error(error.message);
+  if (!count) return 1;
+  return Math.ceil(count / PAGE_SIZE);
 };
