@@ -11,9 +11,10 @@ import { Button } from "~/common/components/ui/button";
 import { Progress } from "~/common/components/ui/progress";
 import { Separator } from "~/common/components/ui/separator";
 
-import { Link, type MetaFunction } from "react-router";
+import { data, Link, type MetaFunction } from "react-router";
 import type { Route } from "./+types/manage-page";
 import { getAccount, getBudgets } from "./queries";
+import { makeSSRClient } from "~/supa-client";
 
 export const meta: MetaFunction = () => {
   return [
@@ -29,18 +30,24 @@ interface Budget {
   current_amount: number;
 }
 
-export const loader = async ({ params }: Route.LoaderArgs) => {
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { accountId } = params;
-  const account = await getAccount(accountId);
-  const budgets = await getBudgets(accountId);
+  const { client, headers } = makeSSRClient(request);
+  const account = await getAccount(client, accountId);
+  const budgets = await getBudgets(client, accountId);
   const monthlyBudget =
     budgets.reduce((acc, budget) => acc + budget.budget_amount, 0) / 12;
-  return {
-    accountId,
-    account,
-    budgets,
-    monthlyBudget,
-  };
+  return data(
+    {
+      accountId,
+      account,
+      budgets,
+      monthlyBudget,
+    },
+    {
+      headers,
+    }
+  );
 };
 
 export default function ManagePage({ loaderData }: Route.ComponentProps) {

@@ -12,9 +12,10 @@ import { Card } from "~/common/components/ui/card";
 import { FormInput } from "~/common/components/form-input";
 import { DatePicker } from "~/common/components/date-picker";
 import type { Route } from "./+types/goal-page";
-import type { MetaFunction } from "react-router";
+import { data, type MetaFunction } from "react-router";
 import { getSavingsGoal } from "./queries";
 import { getAccount } from "../manage/queries";
+import { makeSSRClient } from "~/supa-client";
 
 export const meta: MetaFunction = () => {
   return [
@@ -23,16 +24,22 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export const loader = async ({ params }: Route.LoaderArgs) => {
-  const savingsGoal = await getSavingsGoal(params.accountId);
-  const account = await getAccount(params.accountId);
-  return {
-    initialMonthlyIncomes,
-    initialMonthlyExpenses,
-    irregularCategories,
-    savingsGoal,
-    account,
-  };
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
+  const { client, headers } = makeSSRClient(request);
+  const savingsGoal = await getSavingsGoal(client, params.accountId);
+  const account = await getAccount(client, params.accountId);
+  return data(
+    {
+      initialMonthlyIncomes,
+      initialMonthlyExpenses,
+      irregularCategories,
+      savingsGoal,
+      account,
+    },
+    {
+      headers,
+    }
+  );
 };
 
 export default function GoalsPage({ loaderData }: Route.ComponentProps) {

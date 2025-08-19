@@ -19,17 +19,19 @@ import { FormInput } from "~/common/components/form-input";
 import type { Route } from "./+types/expense-page";
 import { formatCurrency } from "~/lib/utils";
 import { getExpenses, getTotalExpense } from "./queries";
-import { Link } from "react-router";
+import { data, Link } from "react-router";
+import { makeSSRClient } from "~/supa-client";
 
-export const loader = async ({ params }: Route.LoaderArgs) => {
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { accountId } = params;
-  const expenses = await getExpenses(accountId);
-  const totalExpense = await getTotalExpense(accountId);
-  return { expenses, totalExpense, accountId };
+  const { client, headers } = makeSSRClient(request);
+  const expenses = await getExpenses(client, accountId);
+  const totalExpense = await getTotalExpense(client, accountId);
+  return data({ expenses, totalExpense, accountId }, { headers });
 };
 
 interface Expense {
-  transaction_id: string;
+  transaction_id: number;
   note: string;
   amount: number;
   occurred_at: string;
@@ -42,7 +44,7 @@ export default function ExpensePage({ loaderData }: Route.ComponentProps) {
     accountId: "",
   };
 
-  const deleteExpense = (id: string) => {
+  const deleteExpense = (id: number) => {
     console.log(id);
   };
 
