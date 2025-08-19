@@ -40,10 +40,11 @@ import { DatePicker } from "~/common/components/date-picker";
 import { Progress } from "~/common/components/ui/progress";
 import { FormInput } from "~/common/components/form-input";
 import { Label } from "~/common/components/ui/label";
-import type { MetaFunction } from "react-router";
+import { data, type MetaFunction } from "react-router";
 import type { Route } from "./+types/dashboard-page";
 import { getAccount, getBudgets } from "../manage/queries";
 import { getSavingsGoal } from "../goal/queries";
+import { makeSSRClient } from "~/supa-client";
 
 export const meta: MetaFunction = () => {
   return [
@@ -52,16 +53,22 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export const loader = async ({ params }: Route.LoaderArgs) => {
-  const account = await getAccount(params.accountId);
-  const savingsGoal = await getSavingsGoal(params.accountId);
-  const budgets = await getBudgets(params.accountId);
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
+  const { client, headers } = makeSSRClient(request);
+  const account = await getAccount(client, params.accountId);
+  const savingsGoal = await getSavingsGoal(client, params.accountId);
+  const budgets = await getBudgets(client, params.accountId);
 
-  return {
-    savingsGoal,
-    account,
-    budgets,
-  };
+  return data(
+    {
+      savingsGoal,
+      account,
+      budgets,
+    },
+    {
+      headers,
+    }
+  );
 };
 
 export default function DashboardPage({ loaderData }: Route.ComponentProps) {

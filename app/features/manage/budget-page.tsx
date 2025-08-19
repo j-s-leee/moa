@@ -23,6 +23,7 @@ import {
   getBudgetExpensesCount,
 } from "./queries";
 import BudgetExpensePagination from "~/common/components/budget-expense-pagination";
+import { makeSSRClient } from "~/supa-client";
 
 export const meta: Route.MetaFunction = ({ data }: Route.MetaArgs) => {
   return [
@@ -56,17 +57,23 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   }
   const { budgetId, accountId } = parsedParams;
   const { page } = parsedSearchParams;
-  const budget = await getBudget(budgetId);
-  const expenses = await getBudgetExpenses({ budgetId, page });
-  const totalPages = await getBudgetExpensesCount(budgetId);
-  return {
-    budgetId,
-    accountId,
-    budget,
-    page,
-    expenses,
-    totalPages,
-  };
+  const { client, headers } = makeSSRClient(request);
+  const budget = await getBudget(client, budgetId);
+  const expenses = await getBudgetExpenses({ client, budgetId, page });
+  const totalPages = await getBudgetExpensesCount({ client, budgetId });
+  return data(
+    {
+      budgetId,
+      accountId,
+      budget,
+      page,
+      expenses,
+      totalPages,
+    },
+    {
+      headers,
+    }
+  );
 };
 
 export default function BudgetPage({ loaderData }: Route.ComponentProps) {

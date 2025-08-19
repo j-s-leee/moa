@@ -22,6 +22,7 @@ import { Pie, PieChart } from "recharts";
 import { getAccount, getBudgets } from "../manage/queries";
 import { getSavingsGoal } from "../goal/queries";
 import { DateTime } from "luxon";
+import { makeSSRClient } from "~/supa-client";
 
 export const meta: MetaFunction = () => {
   return [
@@ -30,10 +31,11 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export const loader = async ({ params }: Route.LoaderArgs) => {
-  const account = await getAccount(params.accountId);
-  const budgets = await getBudgets(params.accountId);
-  const goals = await getSavingsGoal(params.accountId);
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
+  const { client, headers } = makeSSRClient(request);
+  const account = await getAccount(client, params.accountId);
+  const budgets = await getBudgets(client, params.accountId);
+  const goals = await getSavingsGoal(client, params.accountId);
   return {
     account,
     budgets,

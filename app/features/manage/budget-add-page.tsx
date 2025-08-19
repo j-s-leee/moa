@@ -4,6 +4,7 @@ import { data, Link } from "react-router";
 import { Button } from "~/common/components/ui/button";
 import { FormInput } from "~/common/components/form-input";
 import { ChevronLeft } from "lucide-react";
+import { makeSSRClient } from "~/supa-client";
 
 export const meta: Route.MetaFunction = () => {
   return [
@@ -16,7 +17,8 @@ const paramSchema = z.object({
   accountId: z.string(),
 });
 
-export const loader = async ({ params }: Route.LoaderArgs) => {
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
+  const { client, headers } = makeSSRClient(request);
   const { success, data: parsedParams } = paramSchema.safeParse(params);
   if (!success) {
     throw data(
@@ -28,9 +30,7 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
     );
   }
   const { accountId } = parsedParams;
-  return {
-    accountId,
-  };
+  return data({ accountId }, { headers });
 };
 
 export default function BudgetAddPage({ loaderData }: Route.ComponentProps) {

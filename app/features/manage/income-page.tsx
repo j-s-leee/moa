@@ -19,18 +19,20 @@ import { FormInput } from "~/common/components/form-input";
 import type { Route } from "./+types/income-page";
 import { formatCurrency } from "~/lib/utils";
 import { getIncomes, getTotalIncome } from "./queries";
-import { Link } from "react-router";
+import { data, Link } from "react-router";
+import { makeSSRClient } from "~/supa-client";
 
-export const loader = async ({ params }: Route.LoaderArgs) => {
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { accountId } = params;
-  const incomes = await getIncomes(accountId);
-  const totalIncome = await getTotalIncome(accountId);
+  const { client, headers } = makeSSRClient(request);
+  const incomes = await getIncomes(client, accountId);
+  const totalIncome = await getTotalIncome(client, accountId);
 
-  return { incomes, accountId, totalIncome };
+  return data({ incomes, accountId, totalIncome }, { headers });
 };
 
 interface Income {
-  transaction_id: string;
+  transaction_id: number;
   note: string;
   amount: number;
   occurred_at: string;
@@ -38,7 +40,7 @@ interface Income {
 
 export default function IncomePage({ loaderData }: Route.ComponentProps) {
   const { incomes = [], accountId = "", totalIncome = 0 } = loaderData || {};
-  const deleteIncome = (id: string) => {
+  const deleteIncome = (id: number) => {
     console.log(id);
   };
 
