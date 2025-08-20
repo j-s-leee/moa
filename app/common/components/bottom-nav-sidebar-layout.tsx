@@ -1,15 +1,17 @@
-import { Outlet } from "react-router";
+import { data, Outlet } from "react-router";
 import MobileHeader from "./mobile-header";
 import BottomNav from "./bottom-nav";
 import type { Route } from "./+types/bottom-nav-sidebar-layout";
 import { SidebarProvider, SidebarInset } from "./ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { getAccounts, getProfile } from "./queries";
+import { makeSSRClient } from "~/supa-client";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const accounts = await getAccounts();
-  const profile = await getProfile();
-  return { accounts, profile };
+  const { client, headers } = makeSSRClient(request);
+  const accounts = await getAccounts(client);
+  const profile = await getProfile(client);
+  return data({ accounts, profile }, { headers });
 };
 
 export default function BottomNavSidebarLayout({
