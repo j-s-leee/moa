@@ -1,5 +1,5 @@
 import { bigint, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { profiles } from "../login/schema";
+import { profiles } from "../auth/schema";
 
 export const accounts = pgTable("accounts", {
   account_id: uuid().primaryKey(),
