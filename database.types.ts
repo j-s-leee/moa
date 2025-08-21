@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_members: {
+        Row: {
+          account_id: string
+          created_at: string
+          profile_id: string
+          role: Database["public"]["Enums"]["account_roles"]
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          profile_id: string
+          role: Database["public"]["Enums"]["account_roles"]
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          profile_id?: string
+          role?: Database["public"]["Enums"]["account_roles"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_members_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "account_members_profile_id_profiles_profile_id_fk"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
       accounts: {
         Row: {
           account_id: string
@@ -175,6 +214,41 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          invitation_id: string
+          token: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          invitation_id: string
+          token: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          invitation_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["account_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -248,6 +322,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      account_roles: "owner" | "member"
       transaction_types: "income" | "expense"
     }
     CompositeTypes: {
@@ -376,6 +451,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_roles: ["owner", "member"],
       transaction_types: ["income", "expense"],
     },
   },

@@ -6,7 +6,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { accounts } from "../goal/schema";
+import { accounts } from "../account/schema";
 
 export const transactionTypes = pgEnum("transaction_types", [
   "income",
