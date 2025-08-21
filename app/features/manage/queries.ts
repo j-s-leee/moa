@@ -58,10 +58,13 @@ export const getAccount = async (
 ) => {
   const { data, error } = await client
     .from("accounts")
-    .select("account_id, total_income, total_expense, total_savings")
-    .eq("account_id", accountId);
+    .select(
+      "account_id, name, currency, total_income, total_expense, total_savings"
+    )
+    .eq("account_id", accountId)
+    .single();
   if (error) throw new Error(error.message);
-  return data[0];
+  return data;
 };
 
 export const getBudgets = async (

@@ -6,11 +6,13 @@ import { SidebarProvider, SidebarInset } from "./ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { getAccounts, getProfile } from "./queries";
 import { makeSSRClient } from "~/supa-client";
+import { getLoggedInUserId } from "~/features/auth/queries";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { client, headers } = makeSSRClient(request);
+  const userId = await getLoggedInUserId(client);
+  const profile = await getProfile(client, userId);
   const accounts = await getAccounts(client);
-  const profile = await getProfile(client);
   return data({ accounts, profile }, { headers });
 };
 

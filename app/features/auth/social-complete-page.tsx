@@ -22,7 +22,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   if (error) {
     throw error;
   }
-  return redirect("/", {
+  return redirect("/account", {
     headers,
   });
 };
