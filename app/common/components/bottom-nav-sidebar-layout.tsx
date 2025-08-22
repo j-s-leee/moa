@@ -4,15 +4,16 @@ import BottomNav from "./bottom-nav";
 import type { Route } from "./+types/bottom-nav-sidebar-layout";
 import { SidebarProvider, SidebarInset } from "./ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
-import { getAccounts, getProfile } from "./queries";
+import { getProfile } from "./queries";
 import { makeSSRClient } from "~/supa-client";
 import { getLoggedInUserId } from "~/features/auth/queries";
+import { getAccountsByProfileId } from "~/features/account/queries";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { client, headers } = makeSSRClient(request);
   const userId = await getLoggedInUserId(client);
   const profile = await getProfile(client, userId);
-  const accounts = await getAccounts(client);
+  const accounts = await getAccountsByProfileId(client, userId);
   return data({ accounts, profile }, { headers });
 };
 
@@ -23,7 +24,7 @@ export default function BottomNavSidebarLayout({
     <SidebarProvider>
       <AppSidebar accounts={loaderData.accounts} profile={loaderData.profile} />
       <SidebarInset>
-        <MobileHeader />
+        <MobileHeader name={loaderData.profile.name} />
         <main className="px-4 py-6 pb-24">
           <Outlet />
         </main>

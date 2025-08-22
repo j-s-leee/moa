@@ -10,7 +10,7 @@ import {
 import { profiles } from "../auth/schema";
 
 export const accounts = pgTable("accounts", {
-  account_id: uuid().primaryKey(),
+  account_id: uuid("account_id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   currency: text("currency").notNull().default("KRW"),
   total_income: bigint({ mode: "number" }).notNull().default(0),
@@ -42,7 +42,7 @@ export const account_members = pgTable(
 );
 
 export const invitations = pgTable("invitations", {
-  invitation_id: uuid().primaryKey(),
+  invitation_id: uuid().primaryKey().defaultRandom(),
   account_id: uuid().references(() => accounts.account_id, {
     onDelete: "cascade",
   }),

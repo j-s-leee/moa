@@ -11,7 +11,7 @@ import { Button } from "~/common/components/ui/button";
 import { Progress } from "~/common/components/ui/progress";
 import { Separator } from "~/common/components/ui/separator";
 
-import { data, Link, type MetaFunction } from "react-router";
+import { data, Link, redirect, type MetaFunction } from "react-router";
 import type { Route } from "./+types/manage-page";
 import { getAccount, getBudgets } from "./queries";
 import { makeSSRClient } from "~/supa-client";

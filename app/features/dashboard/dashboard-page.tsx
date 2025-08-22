@@ -77,62 +77,79 @@ export default function DashboardPage({ loaderData }: Route.ComponentProps) {
   return (
     <div className="space-y-6">
       {/* 저축 진행률 카드 */}
-      <Card className="rounded-2xl shadow-lg gap-2 bg-gradient-to-br from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 border-none text-white">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">저축 목표 진행률</h2>
-            <PiggyBank className="size-6" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="">현재 금액</span>
-            <span className="text-xl font-bold">
-              {formatCurrency(savingsGoal.current_amount)}
-            </span>
-          </div>
-          <Progress
-            value={(savingsGoal.current_amount / savingsGoal.goal_amount) * 100}
-            className="h-3 [&>div]:bg-white bg-muted/20"
-          />
-          <div className="flex justify-between items-center text-sm">
-            <span>
-              {(
-                (savingsGoal.current_amount / savingsGoal.goal_amount) *
-                100
-              ).toFixed(1)}
-              % 달성
-            </span>
-            <span>목표: {formatCurrency(savingsGoal.goal_amount)}</span>
-          </div>
-        </CardContent>
-      </Card>
+      {savingsGoal && (
+        <Card className="rounded-2xl shadow-lg gap-2 bg-gradient-to-br from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 border-none text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">저축 목표 진행률</h2>
+              <PiggyBank className="size-6" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="">현재 금액</span>
+              <span className="text-xl font-bold">
+                {formatCurrency(savingsGoal.current_amount)}
+              </span>
+            </div>
+            <Progress
+              value={
+                (savingsGoal.current_amount / savingsGoal.goal_amount) * 100
+              }
+              className="h-3 [&>div]:bg-white bg-muted/20"
+            />
+            <div className="flex justify-between items-center text-sm">
+              <span>
+                {(
+                  (savingsGoal.current_amount / savingsGoal.goal_amount) *
+                  100
+                ).toFixed(1)}
+                % 달성
+              </span>
+              <span>목표: {formatCurrency(savingsGoal.goal_amount)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 저축 계획 요약 */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="p-4 rounded-xl shadow-none border gap-2">
-          <div className="flex items-center space-x-2 mb-2">
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-sm text-muted-foreground">월 저축 가능</span>
-          </div>
-          <div className="text-lg font-bold">
-            {formatCurrency(account.total_savings)}
-          </div>
-        </Card>
-        <Card className="p-4 rounded-xl shadow-none border gap-2">
-          <div className="flex items-center space-x-2 mb-2">
-            <Calendar className="size-4" />
-            <span className="text-sm text-muted-foreground">목표 달성까지</span>
-          </div>
-          <div className="text-lg font-bold">
-            {Math.ceil(
-              (savingsGoal.goal_amount - savingsGoal.current_amount) /
-                account.total_savings
-            )}
-            개월
-          </div>
-        </Card>
-      </div>
+      {savingsGoal && (
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="p-4 rounded-xl shadow-none border gap-2">
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm text-muted-foreground">
+                월 저축 가능
+              </span>
+            </div>
+            <div className="text-lg font-bold">
+              {formatCurrency(account.total_savings)}
+            </div>
+          </Card>
+          <Card className="p-4 rounded-xl shadow-none border gap-2">
+            <div className="flex items-center space-x-2 mb-2">
+              <Calendar className="size-4" />
+              <span className="text-sm text-muted-foreground">
+                목표 달성까지
+              </span>
+            </div>
+            <div className="text-lg font-bold">
+              {Math.ceil(
+                (savingsGoal.goal_amount - savingsGoal.current_amount) /
+                  account.total_savings
+              )}
+              개월
+            </div>
+          </Card>
+        </div>
+      )}
+      {!savingsGoal && (
+        <div className="flex justify-center items-center h-full">
+          <p className="text-sm text-muted-foreground">
+            저축 목표를 설정해주세요.
+          </p>
+        </div>
+      )}
 
       {/* 비정기 지출 현황 */}
       <Card className="p-6 rounded-2xl shadow-none border gap-2">
