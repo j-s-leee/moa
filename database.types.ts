@@ -41,6 +41,13 @@ export type Database = {
             foreignKeyName: "account_members_account_id_accounts_account_id_fk"
             columns: ["account_id"]
             isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "account_members_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["account_id"]
           },
@@ -66,7 +73,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          account_id: string
+          account_id?: string
           created_at?: string
           created_by: string
           currency?: string
@@ -168,6 +175,13 @@ export type Database = {
             foreignKeyName: "budgets_account_id_accounts_account_id_fk"
             columns: ["account_id"]
             isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "budgets_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["account_id"]
           },
@@ -209,6 +223,13 @@ export type Database = {
             foreignKeyName: "goals_account_id_accounts_account_id_fk"
             columns: ["account_id"]
             isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "goals_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["account_id"]
           },
@@ -228,7 +249,7 @@ export type Database = {
           created_at?: string
           email: string
           expires_at: string
-          invitation_id: string
+          invitation_id?: string
           token: string
         }
         Update: {
@@ -240,6 +261,13 @@ export type Database = {
           token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "invitations_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
           {
             foreignKeyName: "invitations_account_id_accounts_account_id_fk"
             columns: ["account_id"]
@@ -309,6 +337,13 @@ export type Database = {
             foreignKeyName: "transactions_account_id_accounts_account_id_fk"
             columns: ["account_id"]
             isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "transactions_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["account_id"]
           },
@@ -316,7 +351,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      account_budget_list_view: {
+        Row: {
+          account_id: string | null
+          budget_amount: number | null
+          currency: string | null
+          current_budget: number | null
+          name: string | null
+          total_expense: number | null
+          total_income: number | null
+          total_savings: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

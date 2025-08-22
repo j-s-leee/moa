@@ -17,6 +17,7 @@ import {
   useTheme,
 } from "remix-themes";
 import { cn } from "./lib/utils";
+import { Toaster } from "~/common/components/ui/sonner";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -47,6 +48,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data?.theme)} />
       </head>
       <body>
+        <Toaster position="top-center" />
         {children}
         <ScrollRestoration />
         <Scripts />

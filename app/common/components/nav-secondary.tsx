@@ -15,28 +15,57 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useFetcher, useNavigate } from "react-router";
 import { Button } from "./ui/button";
-
-interface Account {
-  account_id: string;
-  name: string;
-}
+import type { Account } from "~/common/types";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export function NavSecondary({
-  items,
+  accounts,
   ...props
 }: {
-  items: Account[];
+  accounts: Account[];
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
-  const { isMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const fetcher = useFetcher();
+  const navigate = useNavigate();
 
+  // fetcher 상태 모니터링
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) {
+      if (fetcher.data.success && fetcher.data.redirectTo) {
+        // 삭제 성공 시 toast 표시
+        toast.success("가계부가 삭제되었습니다.", {
+          action: {
+            label: "확인",
+            onClick: () => {
+              toast.dismiss();
+              navigate(fetcher.data.redirectTo);
+            },
+          },
+        });
+      } else if (fetcher.data.error) {
+        // 삭제 실패 시 에러 처리
+        toast.error(fetcher.data.error);
+      }
+    }
+  }, [fetcher.state, fetcher.data, navigate]);
+
+  const onClickDelete = (accountId: string) => {
+    setOpenMobile(false);
+
+    fetcher.submit(
+      { accountId },
+      { method: "post", action: "/account/delete" }
+    );
+  };
   return (
     <SidebarGroup {...props}>
       <SidebarGroupLabel>가계부</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {items.map((item) => (
+          {accounts.map((item) => (
             <SidebarMenuItem key={item.account_id}>
               <div className="flex w-full items-center">
                 <SidebarMenuButton className="flex-1">
@@ -60,17 +89,24 @@ export function NavSecondary({
                     align={isMobile ? "end" : "start"}
                     className="min-w-56 rounded-lg"
                   >
-                    <DropdownMenuItem>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      <span>이름 바꾸기</span>
+                    <DropdownMenuItem asChild>
+                      <Link to={`/account/${item.account_id}/edit`}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        <span>이름 바꾸기</span>
+                      </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Users className="mr-2 h-4 w-4" />
-                      <span>멤버 관리</span>
+                    <DropdownMenuItem asChild>
+                      <Link to={`/account/${item.account_id}/manage/member`}>
+                        <Users className="mr-2 h-4 w-4" />
+                        <span>멤버 관리</span>
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-400">
-                      <Trash2 className="mr-2 h-4 w-4 text-red-400" />
+                    <DropdownMenuItem
+                      onClick={() => onClickDelete(item.account_id)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4 text-destructive" />
                       <span>삭제</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>

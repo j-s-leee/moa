@@ -1,6 +1,7 @@
 import { PAGE_SIZE } from "./constants";
 import type { Database } from "database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { redirect } from "react-router";
 
 export const getTotalIncome = async (
   client: SupabaseClient<Database>,
@@ -63,7 +64,7 @@ export const getAccount = async (
     )
     .eq("account_id", accountId)
     .single();
-  if (error) throw new Error(error.message);
+  if (error) throw redirect("/account");
   return data;
 };
 

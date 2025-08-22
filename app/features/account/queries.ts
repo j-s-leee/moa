@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "database.types";
+import type { Database } from "~/supa-client";
 
 export const getAccountsByProfileId = async (
   client: SupabaseClient<Database>,
@@ -9,13 +9,15 @@ export const getAccountsByProfileId = async (
     .from("account_members")
     .select(
       `
-      accounts!inner(
+      account_budget_list_view!inner(
         account_id,
         name,
         currency,
         total_income,
         total_expense,
-        total_savings
+        total_savings,
+        budget_amount,
+        current_budget
       )
     `
     )
@@ -23,6 +25,31 @@ export const getAccountsByProfileId = async (
 
   if (error) throw new Error(error.message);
 
-  // accounts 배열만 추출하여 반환
-  return data?.map((item) => item.accounts) || [];
+  return data?.map((item) => item.account_budget_list_view) || [];
+};
+
+export const getAccountByIdAndProfileId = async (
+  client: SupabaseClient<Database>,
+  accountId: string,
+  profileId: string
+) => {
+  const { data, error } = await client
+    .from("account_members")
+    .select(
+      `
+      accounts!inner(
+      account_id,
+      name,
+      currency,
+      total_income,
+      total_expense,
+      total_savings
+    )
+    `
+    )
+    .eq("account_id", accountId)
+    .eq("profile_id", profileId)
+    .single();
+  if (error) throw new Error(error.message);
+  return data?.accounts;
 };

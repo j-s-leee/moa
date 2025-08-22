@@ -26,7 +26,10 @@ export default [
     layout("common/components/sidebar-layout.tsx", [
       index("features/account/accounts-page.tsx"),
     ]),
+    route("/create", "features/account/page/create-account-page.tsx"),
+    route("/delete", "features/account/page/delete-account-page.tsx"),
     ...prefix("/:accountId", [
+      route("/edit", "features/account/page/edit-account-page.tsx"),
       layout("common/components/bottom-nav-sidebar-layout.tsx", [
         route("/dashboard", "features/dashboard/dashboard-page.tsx"),
         route("/manage", "features/manage/manage-page.tsx"),

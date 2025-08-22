@@ -9,7 +9,7 @@ export const getSavingsGoal = async (
     .from("goals")
     .select("goal_id, name, goal_amount, current_amount, goal_date")
     .eq("account_id", accountId)
-    .single();
+    .maybeSingle();
   if (error) throw new Error(error.message);
   return data;
 };
