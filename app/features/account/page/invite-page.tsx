@@ -70,11 +70,15 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   return redirect(`/account/${accountId}/manage/member`);
 };
 
-export default function InvitePage({ actionData }: Route.ComponentProps) {
+export default function InvitePage({
+  actionData,
+  loaderData,
+}: Route.ComponentProps) {
+  const { accountId } = loaderData;
   return (
     <main className="px-4 py-6 h-full min-h-screen space-y-6">
       <div className="flex items-center gap-2">
-        <Link to={`/account`}>
+        <Link to={`/account/${accountId}/manage/member`}>
           <ChevronLeft className="size-6" />
         </Link>
         <h3 className="font-semibold text-lg">가계부 초대</h3>
