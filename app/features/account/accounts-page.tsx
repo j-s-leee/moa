@@ -104,11 +104,13 @@ export default function AccountsPage({ loaderData }: Route.ComponentProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <div className="flex items-center gap-2">
-                        <UserPlus size={16} className="mr-2" />
-                        초대하기
-                      </div>
+                    <DropdownMenuItem asChild>
+                      <Link to={`/account/${account.account_id}/manage/member`}>
+                        <div className="flex items-center gap-2">
+                          <UserPlus size={16} className="mr-2" />
+                          멤버 관리
+                        </div>
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <Link

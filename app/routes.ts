@@ -30,6 +30,7 @@ export default [
     route("/delete", "features/account/page/delete-account-page.tsx"),
     ...prefix("/:accountId", [
       route("/edit", "features/account/page/edit-account-page.tsx"),
+      route("/invite", "features/account/page/invite-page.tsx"),
       layout("common/components/bottom-nav-sidebar-layout.tsx", [
         route("/dashboard", "features/dashboard/dashboard-page.tsx"),
         route("/manage", "features/manage/manage-page.tsx"),
@@ -41,6 +42,7 @@ export default [
         route("/budget/:budgetId", "features/manage/budget-page.tsx"),
         route("/income", "features/manage/income-page.tsx"),
         route("/expense", "features/manage/expense-page.tsx"),
+        route("/member", "features/manage/member-page.tsx"),
       ]),
     ]),
   ]),

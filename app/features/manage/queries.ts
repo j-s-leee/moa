@@ -129,3 +129,15 @@ export const getBudgetExpensesCount = async ({
   if (!count) return 1;
   return Math.ceil(count / PAGE_SIZE);
 };
+
+export const getMembers = async (
+  client: SupabaseClient<Database>,
+  accountId: string
+) => {
+  const { data, error } = await client
+    .from("account_members")
+    .select(`profile_id, role, profiles!inner(email, name)`)
+    .eq("account_id", accountId);
+  if (error) throw new Error(error.message);
+  return data;
+};
