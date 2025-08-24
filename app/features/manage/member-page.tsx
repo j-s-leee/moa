@@ -1,5 +1,5 @@
 import { Link, redirect } from "react-router";
-import { ChevronLeft, Plus } from "lucide-react";
+import { ChevronLeft, Link2, Plus } from "lucide-react";
 
 import { getAccountByIdAndProfileId } from "../account/queries";
 import { makeSSRClient } from "~/supa-client";
@@ -9,6 +9,7 @@ import { Button } from "~/common/components/ui/button";
 import { getMembers } from "./queries";
 import { Badge } from "~/common/components/ui/badge";
 import type { Route } from "./+types/member-page";
+import { Separator } from "~/common/components/ui/separator";
 
 export const meta: Route.MetaFunction = () => {
   return [
@@ -46,12 +47,21 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">가계부 멤버 관리</h1>
         {isOwner && (
-          <Link to={`/account/${accountId}/invite`}>
-            <Button className="flex items-center gap-2">
-              <Plus size={16} />
-              멤버 초대
-            </Button>
-          </Link>
+          <>
+            <Link to={`/account/${accountId}/invite`}>
+              <Button className="flex items-center gap-2">
+                <Plus size={16} />
+                멤버 초대
+              </Button>
+            </Link>
+            <Separator orientation="vertical" className="h-4" />
+            <Link to={`/account/${accountId}/manage/link`}>
+              <Button className="flex items-center gap-2">
+                <Link2 size={16} />
+                링크 생성
+              </Button>
+            </Link>
+          </>
         )}
       </div>
       <div className="flex flex-col gap-4">

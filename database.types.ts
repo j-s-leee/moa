@@ -235,30 +235,75 @@ export type Database = {
           },
         ]
       }
+      invitation_accepts: {
+        Row: {
+          accepted_at: string
+          invitation_accept_id: number
+          invitation_id: number | null
+          profile_id: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          invitation_accept_id?: never
+          invitation_id?: number | null
+          profile_id?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          invitation_accept_id?: never
+          invitation_id?: number | null
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_accepts_invitation_id_invitations_invitation_id_fk"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "invitations"
+            referencedColumns: ["invitation_id"]
+          },
+          {
+            foreignKeyName: "invitation_accepts_profile_id_profiles_profile_id_fk"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
       invitations: {
         Row: {
           account_id: string | null
           created_at: string
-          email: string
           expires_at: string
-          invitation_id: string
+          invitation_id: number
+          inviter_id: string | null
+          max_uses: number
+          status: Database["public"]["Enums"]["invitation_status"]
           token: string
+          used_count: number
         }
         Insert: {
           account_id?: string | null
           created_at?: string
-          email: string
-          expires_at: string
-          invitation_id?: string
+          expires_at?: string
+          invitation_id?: never
+          inviter_id?: string | null
+          max_uses?: number
+          status?: Database["public"]["Enums"]["invitation_status"]
           token: string
+          used_count?: number
         }
         Update: {
           account_id?: string | null
           created_at?: string
-          email?: string
           expires_at?: string
-          invitation_id?: string
+          invitation_id?: never
+          inviter_id?: string | null
+          max_uses?: number
+          status?: Database["public"]["Enums"]["invitation_status"]
           token?: string
+          used_count?: number
         }
         Relationships: [
           {
@@ -274,6 +319,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "invitations_inviter_id_profiles_profile_id_fk"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -370,6 +422,7 @@ export type Database = {
     }
     Enums: {
       account_roles: "owner" | "member"
+      invitation_status: "pending" | "consumed" | "expired"
       transaction_types: "income" | "expense"
     }
     CompositeTypes: {
@@ -499,6 +552,7 @@ export const Constants = {
   public: {
     Enums: {
       account_roles: ["owner", "member"],
+      invitation_status: ["pending", "consumed", "expired"],
       transaction_types: ["income", "expense"],
     },
   },

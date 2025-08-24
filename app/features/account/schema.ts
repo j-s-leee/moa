@@ -40,14 +40,3 @@ export const account_members = pgTable(
   },
   (table) => [primaryKey({ columns: [table.account_id, table.profile_id] })]
 );
-
-export const invitations = pgTable("invitations", {
-  invitation_id: uuid().primaryKey().defaultRandom(),
-  account_id: uuid().references(() => accounts.account_id, {
-    onDelete: "cascade",
-  }),
-  email: text().notNull(),
-  token: text().notNull(),
-  expires_at: timestamp().notNull(),
-  created_at: timestamp().notNull().defaultNow(),
-});
