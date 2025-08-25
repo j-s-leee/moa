@@ -12,8 +12,9 @@ import { ChromeIcon, MessageCircleIcon } from "lucide-react";
 
 export function LoginForm({
   className,
+  redirect,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { redirect?: string | null }) {
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -28,13 +29,25 @@ export function LoginForm({
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full" asChild>
-                  <Link to="/auth/social/kakao/start">
+                  <Link
+                    to={`/auth/social/kakao/start${
+                      redirect
+                        ? `?redirect=${encodeURIComponent(redirect)}`
+                        : ""
+                    }`}
+                  >
                     <MessageCircleIcon className="size-4" />
                     Login with Kakao
                   </Link>
                 </Button>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link to="/auth/social/google/start">
+                  <Link
+                    to={`/auth/social/google/start${
+                      redirect
+                        ? `?redirect=${encodeURIComponent(redirect)}`
+                        : ""
+                    }`}
+                  >
                     <ChromeIcon className="size-4" />
                     Login with Google
                   </Link>

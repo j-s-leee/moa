@@ -13,10 +13,19 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     return redirect("/auth/login");
   }
   const { provider } = data;
-  const redirectTo = `http://localhost:5173/auth/social/${provider}/complete`;
+
+  // redirect 쿼리 파라미터 확인
+  const url = new URL(request.url);
+  const redirectParam = url.searchParams.get("redirect");
+
+  // redirect 파라미터가 있으면 완료 페이지 URL에 추가
+  const redirectTo = `http://localhost:5173/auth/social/${provider}/complete${
+    redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ""
+  }`;
+
   const { client, headers } = makeSSRClient(request);
   const {
-    data: { url },
+    data: { url: oauthUrl },
     error,
   } = await client.auth.signInWithOAuth({
     provider,
@@ -24,8 +33,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       redirectTo,
     },
   });
-  if (url) {
-    return redirect(url, {
+  if (oauthUrl) {
+    return redirect(oauthUrl, {
       headers,
     });
   }

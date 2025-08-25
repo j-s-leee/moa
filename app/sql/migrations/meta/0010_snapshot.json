@@ -1,0 +1,90 @@
+{
+  "id": "0010_add_account_id_to_invitation_accepts",
+  "prevId": "0008_lyrical_spectrum",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.invitation_accepts": {
+      "name": "invitation_accepts",
+      "schema": "",
+      "columns": {
+        "invitation_accept_id": {
+          "name": "invitation_accept_id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profile_id": {
+          "name": "profile_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accepted_at": {
+          "name": "accepted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "invitation_accepts_invitation_id_invitations_invitation_id_fk": {
+          "name": "invitation_accepts_invitation_id_invitations_invitation_id_fk",
+          "tableFrom": "invitation_accepts",
+          "tableTo": "invitations",
+          "columnsFrom": ["invitation_id"],
+          "columnsTo": ["invitation_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "invitation_accepts_profile_id_profiles_profile_id_fk": {
+          "name": "invitation_accepts_profile_id_profiles_profile_id_fk",
+          "tableFrom": "invitation_accepts",
+          "tableTo": "profiles",
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["profile_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "invitation_accepts_account_id_accounts_account_id_fk": {
+          "name": "invitation_accepts_account_id_accounts_account_id_fk",
+          "tableFrom": "invitation_accepts",
+          "tableTo": "accounts",
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["account_id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "invitation_accepts_account_id_profile_id_unique": {
+          "name": "invitation_accepts_account_id_profile_id_unique",
+          "columns": ["account_id", "profile_id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "tablesOrder": ["public.invitation_accepts"],
+  "enumsOrder": [],
+  "schemasOrder": []
+}

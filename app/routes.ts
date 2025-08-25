@@ -14,6 +14,12 @@ export default [
   ]),
 
   index("features/home/home-page.tsx"),
+
+  layout("features/invite/invite-layout.tsx", [
+    route("/invite/:token", "features/invite/page/verify-token-page.tsx"),
+    route("/invite/:token/close", "features/invite/page/close-invite-page.tsx"),
+  ]),
+
   ...prefix("/auth", [
     route("/login", "features/auth/login-page.tsx"),
     ...prefix("social/:provider", [
@@ -43,6 +49,7 @@ export default [
         route("/income", "features/manage/income-page.tsx"),
         route("/expense", "features/manage/expense-page.tsx"),
         route("/member", "features/manage/member-page.tsx"),
+        route("/link", "features/invite/page/create-link-page.tsx"),
       ]),
     ]),
   ]),
