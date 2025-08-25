@@ -43,7 +43,8 @@ export const getAccountByIdAndProfileId = async (
       currency,
       total_income,
       total_expense,
-      total_savings
+      total_savings,
+      created_by
     )
     `
     )
@@ -52,4 +53,19 @@ export const getAccountByIdAndProfileId = async (
     .single();
   if (error) throw new Error(error.message);
   return data?.accounts;
+};
+
+export const getAccountByIdAndCreatedBy = async (
+  client: SupabaseClient<Database>,
+  accountId: string,
+  createdBy: string
+) => {
+  const { data, error } = await client
+    .from("accounts")
+    .select("*")
+    .eq("account_id", accountId)
+    .eq("created_by", createdBy)
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 };

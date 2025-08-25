@@ -9,6 +9,7 @@ export const meta: Route.MetaFunction = () => {
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const redirect = url.searchParams.get("redirect");
+  console.log("login page redirect", redirect);
   return { redirect };
 };
 

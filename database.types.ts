@@ -238,23 +238,40 @@ export type Database = {
       invitation_accepts: {
         Row: {
           accepted_at: string
+          account_id: string
           invitation_accept_id: number
           invitation_id: number | null
           profile_id: string | null
         }
         Insert: {
           accepted_at?: string
+          account_id: string
           invitation_accept_id?: never
           invitation_id?: number | null
           profile_id?: string | null
         }
         Update: {
           accepted_at?: string
+          account_id?: string
           invitation_accept_id?: never
           invitation_id?: number | null
           profile_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invitation_accepts_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "invitation_accepts_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["account_id"]
+          },
           {
             foreignKeyName: "invitation_accepts_invitation_id_invitations_invitation_id_fk"
             columns: ["invitation_id"]

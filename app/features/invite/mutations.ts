@@ -80,3 +80,20 @@ export async function acceptInvitation(
 
   return { success: true };
 }
+
+export async function closeInvitation(
+  client: SupabaseClient<Database>,
+  token: string
+) {
+  const { data, error } = await client
+    .from("invitations")
+    .update({ status: "expired" })
+    .eq("token", token)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+  return { success: true };
+}

@@ -20,7 +20,8 @@ export const invitationStatus = pgEnum("invitation_status", [
 export const invitations = pgTable("invitations", {
   invitation_id: bigint({ mode: "number" })
     .primaryKey()
-    .generatedAlwaysAsIdentity(),
+    .generatedAlwaysAsIdentity()
+    .notNull(),
   account_id: uuid().references(() => accounts.account_id, {
     onDelete: "cascade",
   }),

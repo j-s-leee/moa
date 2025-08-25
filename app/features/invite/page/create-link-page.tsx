@@ -1,9 +1,9 @@
 import { ChevronLeft } from "lucide-react";
-import { Form, Link } from "react-router";
+import { redirect, useFetcher, useNavigate } from "react-router";
 import type { Route } from "./+types/create-link-page";
 import { makeSSRClient } from "~/supa-client";
 import { getLoggedInUserId } from "~/features/auth/queries";
-import { getAccountByIdAndProfileId } from "~/features/account/queries";
+import { getAccountByIdAndCreatedBy } from "~/features/account/queries";
 import { z } from "zod";
 import { createInvitation } from "../mutations";
 import { Button } from "~/common/components/ui/button";
@@ -19,7 +19,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "~/common/components/ui/alert";
-import { toast } from "sonner";
+import { Label } from "~/common/components/ui/label";
 
 export const meta: Route.MetaFunction = () => {
   return [
@@ -36,7 +36,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { client } = makeSSRClient(request);
   const userId = await getLoggedInUserId(client);
   const { accountId } = params;
-  const account = await getAccountByIdAndProfileId(client, accountId, userId);
+  const account = await getAccountByIdAndCreatedBy(client, accountId, userId);
   return { account, accountId };
 };
 
@@ -44,7 +44,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   const { client } = makeSSRClient(request);
   const { accountId } = params;
   const userId = await getLoggedInUserId(client);
-  const account = await getAccountByIdAndProfileId(client, accountId, userId);
+  const account = await getAccountByIdAndCreatedBy(client, accountId, userId);
+  if (!account) {
+    return { error: "Account not found" };
+  }
   const formData = await request.formData();
   const {
     success,
@@ -62,7 +65,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     maxUses: parsedData.maxUses,
   });
 
-  return { invitation };
+  return redirect(`/invite/${invitation.token}`);
 };
 
 export default function CreateLinkPage({
@@ -70,52 +73,33 @@ export default function CreateLinkPage({
   loaderData,
 }: Route.ComponentProps) {
   const { account } = loaderData;
+  const fetcher = useFetcher();
 
-  // invitation이 존재하는지 확인 후 사용
-  const invitation =
-    actionData && "invitation" in actionData
-      ? actionData.invitation
-      : undefined;
-
+  const navigate = useNavigate();
   return (
     <main className="px-4 py-6 h-full min-h-screen space-y-6">
-      <Link to="/account">
-        <ChevronLeft className="size-6" />
-      </Link>
-      <h1 className="text-2xl font-bold">Create Link for {account.name}</h1>
-
-      {/* invitation이 성공적으로 생성된 경우 표시 */}
-      {invitation && (
-        <Alert>
-          <AlertTitle>초대 링크가 생성되었습니다!</AlertTitle>
-          <AlertDescription>토큰: {invitation.token}</AlertDescription>
-          <Button
-            variant="outline"
-            onClick={() => {
-              navigator.clipboard.writeText(
-                `http://localhost:5173/invite/${invitation.token}`
-              );
-              toast.success("링크가 복사되었습니다.");
-            }}
-          >
-            링크 복사
-          </Button>
-        </Alert>
-      )}
-
-      <Form method="post">
-        <Select name="maxUses">
-          <SelectTrigger>
-            <SelectValue placeholder="Select a max uses" />
-          </SelectTrigger>
-          <SelectContent>
-            {[...Array(10)].map((_, i) => (
-              <SelectItem key={i} value={String(i + 1)}>
-                {i + 1}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" onClick={() => navigate(-1)}>
+          <ChevronLeft className="size-6" />
+        </Button>
+        <h3 className="text-lg font-semibold">{account.name} 초대 링크 생성</h3>
+      </div>
+      <fetcher.Form method="post" className="space-y-4">
+        <div className="space-y-2">
+          <Label>최대 초대 인원</Label>
+          <Select name="maxUses" defaultValue="1">
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="최대 초대 인원" />
+            </SelectTrigger>
+            <SelectContent>
+              {[...Array(10)].map((_, i) => (
+                <SelectItem key={(i + 1).toString()} value={String(i + 1)}>
+                  {i + 1}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         {actionData &&
           "fieldErrors" in actionData &&
           actionData.fieldErrors && (
@@ -126,8 +110,14 @@ export default function CreateLinkPage({
               </AlertDescription>
             </Alert>
           )}
-        <Button type="submit">Create Link</Button>
-      </Form>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={fetcher.state !== "idle"}
+        >
+          {fetcher.state === "submitting" ? "링크 생성 중..." : "링크 생성"}
+        </Button>
+      </fetcher.Form>
     </main>
   );
 }
