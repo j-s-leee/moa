@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import type { Route } from "./+types/invite-page";
 import { AlertCircleIcon, ChevronLeft } from "lucide-react";
-import { Link, redirect } from "react-router";
+import { Link, redirect, useFetcher } from "react-router";
 import { Form } from "react-router";
 import { FormInput } from "~/common/components/form-input";
 import {
@@ -14,7 +14,8 @@ import { z } from "zod";
 import { makeSSRClient } from "~/supa-client";
 import { toast } from "sonner";
 import { getLoggedInUserId } from "~/features/auth/queries";
-import { getAccountByIdAndProfileId } from "../queries";
+import { getAccountByIdAndCreatedBy } from "../queries";
+import { createInvitation } from "~/features/invite/mutations";
 
 const resendClient = new Resend(process.env.RESEND_API_KEY);
 
@@ -33,7 +34,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { client } = makeSSRClient(request);
   const userId = await getLoggedInUserId(client);
   const { accountId } = params;
-  const account = await getAccountByIdAndProfileId(client, accountId, userId);
+  const account = await getAccountByIdAndCreatedBy(client, accountId, userId);
   return { account, accountId };
 };
 
@@ -41,7 +42,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   const { client } = makeSSRClient(request);
   const { accountId } = params;
   const userId = await getLoggedInUserId(client);
-  const account = await getAccountByIdAndProfileId(client, accountId, userId);
+  const account = await getAccountByIdAndCreatedBy(client, accountId, userId);
   const formData = await request.formData();
   const {
     success,
@@ -53,13 +54,21 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     return { fieldErrors: formError.flatten().fieldErrors };
   }
 
-  //TODO 이메일 초대 정보 저장 로직 추가
+  const invitation = await createInvitation(client, {
+    accountId,
+    userId,
+    email: parsedData.email,
+  });
 
   const { error } = await resendClient.emails.send({
-    from: "pang-in@mail.the-moa.top",
+    from: "noreply@mail.the-moa.top",
     to: parsedData.email,
-    subject: `Invitation to join the ${account.name} account`,
-    html: `<p>You are invited to join the ${account.name} account</p>`,
+    subject: `[MOA] ${account.name} 가계부 초대`,
+    html: `<p>You are invited to join the ${account.name} account</p>
+    <a href="http://localhost:5173/invite/${invitation.token}">
+    click here to join the account
+    </a>
+    `,
   });
 
   if (error) {
@@ -74,17 +83,23 @@ export default function InvitePage({
   actionData,
   loaderData,
 }: Route.ComponentProps) {
-  const { accountId } = loaderData;
+  const { accountId, account } = loaderData;
+  const fetcher = useFetcher();
   return (
     <main className="px-4 py-6 h-full min-h-screen space-y-6">
       <div className="flex items-center gap-2">
         <Link to={`/account/${accountId}/manage/member`}>
           <ChevronLeft className="size-6" />
         </Link>
-        <h3 className="font-semibold text-lg">가계부 초대</h3>
+        <h3 className="font-semibold text-lg">{account.name} 멤버 초대</h3>
       </div>
-      <Form method="post" className="flex flex-col gap-6">
-        <FormInput label="이메일" type="email" name="email" />
+      <fetcher.Form method="post" className="flex flex-col gap-6">
+        <FormInput
+          label="이메일"
+          type="email"
+          name="email"
+          disabled={fetcher.state !== "idle"}
+        />
         {actionData && "fieldErrors" in actionData && (
           <Alert variant="destructive">
             <AlertCircleIcon />
@@ -100,8 +115,10 @@ export default function InvitePage({
             </AlertDescription>
           </Alert>
         )}
-        <Button type="submit">초대</Button>
-      </Form>
+        <Button type="submit" disabled={fetcher.state !== "idle"}>
+          {fetcher.state === "submitting" ? "초대 중..." : "초대"}
+        </Button>
+      </fetcher.Form>
     </main>
   );
 }
