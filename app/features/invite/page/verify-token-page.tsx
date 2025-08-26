@@ -8,8 +8,9 @@ import { acceptInvitation } from "~/features/invite/mutations";
 import {
   getLoggedInUserId,
   getLoggedInUserIdWithRedirectUrl,
+  getLoggedInUserEmail,
 } from "~/features/auth/queries";
-import { redirect, useFetcher } from "react-router";
+import { useFetcher } from "react-router";
 import { Button } from "~/common/components/ui/button";
 import {
   Card,
@@ -24,11 +25,10 @@ import {
   AlertTitle,
 } from "~/common/components/ui/alert";
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { Form, Link } from "react-router";
+import { Form } from "react-router";
 import { DateTime } from "luxon";
 import { toast } from "sonner";
 import AlreadyAccepted from "../components/already-accepted";
-import IsNotPending from "../components/is-not-pending";
 import { useEffect } from "react";
 
 export const meta: Route.MetaFunction = () => {
@@ -40,30 +40,39 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { token } = params;
   const redirectUrl = `/auth/login?redirect=${encodeURIComponent(request.url)}`;
   const userId = await getLoggedInUserIdWithRedirectUrl(client, redirectUrl);
+
   // 여기부턴 로그인 상태
 
   // 토큰으로 초대 정보 조회
   const invitation = await getInvitationByToken(client, token);
-  if (!invitation) {
+  if (!invitation || !invitation.account_id) {
     throw new Error("Invitation not found");
   }
+
+  if (invitation.status !== "pending") {
+    throw new Error("Invitation not pending");
+  }
+
+  const userEmail = await getLoggedInUserEmail(client);
+  if (invitation.email !== userEmail) {
+    throw new Error("Invitation email not match");
+  }
+
   // 이미 수락했는지 확인
   const alreadyAccepted = await checkUserAlreadyAccepted(
     client,
-    invitation.invitation_id,
+    invitation.account_id,
     userId
   );
 
   return {
     invitation,
-    isPending:
-      invitation.max_uses > invitation.used_count ||
-      invitation.status === "pending",
+
     alreadyAccepted,
     isExpired:
       DateTime.fromISO(invitation.expires_at, { zone: "utc" })
         .diffNow()
-        .toMillis() < 0 || invitation.status === "expired",
+        .toMillis() < 0,
     isOwner: invitation.inviter_id === userId,
   };
 };
@@ -73,11 +82,14 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   const { token } = params;
 
   try {
-    const userId = await getLoggedInUserId(client);
+    const userEmail = await getLoggedInUserEmail(client);
+    if (!userEmail) {
+      throw new Error("User email not found");
+    }
     const invitation = await getInvitationByToken(client, token);
 
     // 초대 수락 처리
-    await acceptInvitation(client, invitation.invitation_id, userId);
+    await acceptInvitation(client, invitation.token, userEmail);
 
     return { success: true, message: "초대 수락 완료" };
   } catch (error) {
@@ -93,8 +105,7 @@ export default function VerifyTokenPage({
   actionData,
   loaderData,
 }: Route.ComponentProps) {
-  const { invitation, isPending, alreadyAccepted, isExpired, isOwner } =
-    loaderData;
+  const { invitation, alreadyAccepted, isExpired, isOwner } = loaderData;
   const fetcher = useFetcher();
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
@@ -104,20 +115,12 @@ export default function VerifyTokenPage({
       toast.error(fetcher.data.error);
     }
   }, [fetcher.state, fetcher.data]);
-  if (alreadyAccepted) {
+
+  if (!isOwner && alreadyAccepted) {
     return (
       <AlreadyAccepted
         token={invitation.token}
         accountId={invitation.account_id}
-      />
-    );
-  }
-
-  if (!isPending) {
-    return (
-      <IsNotPending
-        maxUses={invitation.max_uses}
-        usedCount={invitation.used_count}
       />
     );
   }
@@ -131,21 +134,7 @@ export default function VerifyTokenPage({
             초대 확인
           </CardTitle>
           <CardDescription>
-            {isOwner ? (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `http://localhost:5173/invite/${invitation.token}`
-                  );
-                  toast.success("링크가 복사되었습니다.");
-                }}
-              >
-                링크 복사
-              </Button>
-            ) : (
-              <span>{invitation.accounts?.name}에 초대되었습니다.</span>
-            )}
+            <span>{invitation.accounts?.name}에 초대되었습니다.</span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -153,13 +142,11 @@ export default function VerifyTokenPage({
             <p className="text-sm font-medium">초대 정보</p>
             <div className="text-sm text-muted-foreground space-y-1">
               <p>{invitation.accounts?.name}</p>
-              <p>최대 수락 가능 인원: {invitation.max_uses}명</p>
-              <p>현재 수락된 인원: {invitation.used_count}명</p>
               <p>
-                만료일:{" "}
                 {DateTime.fromISO(invitation.expires_at, {
                   zone: "utc",
-                }).toRelative()}
+                }).toRelative()}{" "}
+                만료
               </p>
             </div>
           </div>
@@ -205,7 +192,7 @@ export default function VerifyTokenPage({
             </fetcher.Form>
           )}
 
-          {!isOwner && !alreadyAccepted && (
+          {!isOwner && !alreadyAccepted && invitation.status === "pending" && (
             <Form method="post">
               <Button
                 type="submit"

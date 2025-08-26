@@ -26,6 +26,10 @@ export default [
       route("/start", "features/auth/social-start-page.tsx"),
       route("/complete", "features/auth/social-complete-page.tsx"),
     ]),
+    ...prefix("magic-link", [
+      route("/start", "features/auth/magic-link-start-page.tsx"),
+      route("/verify", "features/auth/magic-link-verify-page.tsx"),
+    ]),
     route("/logout", "features/auth/logout-page.tsx"),
   ]),
   ...prefix("/account", [
@@ -36,7 +40,6 @@ export default [
     route("/delete", "features/account/page/delete-account-page.tsx"),
     ...prefix("/:accountId", [
       route("/edit", "features/account/page/edit-account-page.tsx"),
-      route("/invite", "features/account/page/invite-page.tsx"),
       layout("common/components/bottom-nav-sidebar-layout.tsx", [
         route("/dashboard", "features/dashboard/dashboard-page.tsx"),
         route("/manage", "features/manage/manage-page.tsx"),
@@ -49,7 +52,7 @@ export default [
         route("/income", "features/manage/income-page.tsx"),
         route("/expense", "features/manage/expense-page.tsx"),
         route("/member", "features/manage/member-page.tsx"),
-        route("/link", "features/invite/page/create-link-page.tsx"),
+        route("/invite", "features/account/page/invite-page.tsx"),
       ]),
     ]),
   ]),

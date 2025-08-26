@@ -11,8 +11,14 @@ export const getLoggedInUserIdWithRedirectUrl = async (
   redirectUrl: string
 ) => {
   const { data, error } = await client.auth.getUser();
-  console.log("getLoggedInUserIdWithRedirectUrl", data, error);
-  console.log("redirectUrl", redirectUrl);
   if (error || data.user === null) throw redirect(redirectUrl);
   return data.user.id;
+};
+
+export const getLoggedInUserEmail = async (
+  client: SupabaseClient<Database>
+) => {
+  const { data, error } = await client.auth.getUser();
+  if (error || data.user === null) throw redirect("/auth/login");
+  return data.user.email;
 };

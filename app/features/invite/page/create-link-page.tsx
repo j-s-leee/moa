@@ -20,6 +20,7 @@ import {
   AlertTitle,
 } from "~/common/components/ui/alert";
 import { Label } from "~/common/components/ui/label";
+import { FormInput } from "~/common/components/form-input";
 
 export const meta: Route.MetaFunction = () => {
   return [
@@ -29,7 +30,7 @@ export const meta: Route.MetaFunction = () => {
 };
 
 const formSchema = z.object({
-  maxUses: z.coerce.number().min(1).max(10),
+  email: z.string().email(),
 });
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -62,7 +63,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   const invitation = await createInvitation(client, {
     accountId,
     userId,
-    maxUses: parsedData.maxUses,
+    email: parsedData.email,
   });
 
   return redirect(`/invite/${invitation.token}`);
@@ -82,23 +83,11 @@ export default function CreateLinkPage({
         <Button variant="ghost" onClick={() => navigate(-1)}>
           <ChevronLeft className="size-6" />
         </Button>
-        <h3 className="text-lg font-semibold">{account.name} 초대 링크 생성</h3>
+        <h3 className="text-lg font-semibold">{account.name} 초대 발송</h3>
       </div>
       <fetcher.Form method="post" className="space-y-4">
         <div className="space-y-2">
-          <Label>최대 초대 인원</Label>
-          <Select name="maxUses" defaultValue="1">
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="최대 초대 인원" />
-            </SelectTrigger>
-            <SelectContent>
-              {[...Array(10)].map((_, i) => (
-                <SelectItem key={(i + 1).toString()} value={String(i + 1)}>
-                  {i + 1}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FormInput type="email" label="이메일" name="email" />
         </div>
         {actionData &&
           "fieldErrors" in actionData &&
@@ -106,7 +95,7 @@ export default function CreateLinkPage({
             <Alert variant="destructive">
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>
-                {actionData.fieldErrors.maxUses}
+                {actionData.fieldErrors.email}
               </AlertDescription>
             </Alert>
           )}
@@ -115,7 +104,7 @@ export default function CreateLinkPage({
           className="w-full"
           disabled={fetcher.state !== "idle"}
         >
-          {fetcher.state === "submitting" ? "링크 생성 중..." : "링크 생성"}
+          {fetcher.state === "submitting" ? "초대 발송 중..." : "초대 발송"}
         </Button>
       </fetcher.Form>
     </main>

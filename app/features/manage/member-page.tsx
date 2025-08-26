@@ -1,5 +1,5 @@
 import { Link, redirect, useFetcher } from "react-router";
-import { ChevronLeft, Link2, Trash2 } from "lucide-react";
+import { ChevronLeft, Trash2, UserPlus } from "lucide-react";
 
 import { getAccountByIdAndProfileId } from "../account/queries";
 import { makeSSRClient } from "~/supa-client";
@@ -57,9 +57,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       accountId,
       userId
     );
-    return { accountId, members, isOwner, invitations };
+    return { accountId, members, isOwner, invitations, account };
   }
-  return { accountId, members, isOwner, invitations: null };
+  return { accountId, members, isOwner, invitations: null, account };
 };
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
@@ -103,14 +103,14 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
       toast.error(fetcher.data.error);
     }
   }, [fetcher.state, fetcher.data]);
-  const { accountId, members, isOwner, invitations } = loaderData;
+  const { accountId, members, isOwner, invitations, account } = loaderData;
   return (
     <main className="px-4 py-6 h-full min-h-screen space-y-6">
       <div className="flex items-center gap-2">
         <Link to={`/account`}>
           <ChevronLeft className="size-6" />
         </Link>
-        <h3 className="font-semibold text-lg">가계부 멤버 관리</h3>
+        <h3 className="font-semibold text-lg">{account.name} 멤버 관리</h3>
       </div>
 
       <div>
@@ -152,8 +152,9 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
                           name="memberId"
                           value={member.profile_id}
                         />
-                        <Button size="sm" variant="ghost" type="submit">
+                        <Button size="sm" variant="destructive" type="submit">
                           <Trash2 />
+                          <span>revoke</span>
                         </Button>
                       </fetcher.Form>
                     )}
@@ -168,11 +169,11 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
                 <h1>초대 목록</h1>
                 <Button size="sm" asChild>
                   <Link
-                    to={`/account/${accountId}/manage/link`}
+                    to={`/account/${accountId}/manage/invite`}
                     className="flex items-center gap-2"
                   >
-                    <Link2 />
-                    <span>링크 생성</span>
+                    <UserPlus />
+                    <span>초대하기</span>
                   </Link>
                 </Button>
               </div>
@@ -185,11 +186,16 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
                       className="block"
                     >
                       <div className="flex flex-col gap-2 bg-muted p-2 rounded-md">
-                        <Badge>{invitation.token}</Badge>
+                        <Badge>
+                          {invitation.status === "pending"
+                            ? "대기"
+                            : invitation.status === "consumed"
+                            ? "수락"
+                            : "만료"}
+                        </Badge>
                         <div className="flex justify-between">
                           <span className="text-xs text-muted-foreground">
-                            {invitation.used_count}명 수락 /{" "}
-                            {invitation.max_uses}명 초대
+                            {invitation.email}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {DateTime.fromISO(invitation.expires_at, {

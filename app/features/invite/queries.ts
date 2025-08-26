@@ -47,29 +47,14 @@ export async function getInvitationByToken(
 
 export async function checkUserAlreadyAccepted(
   client: SupabaseClient<Database>,
-  invitationId: number,
+  accountId: string,
   profileId: string
 ) {
   // 먼저 초대 정보에서 account_id 가져오기
-  const { data: invitation, error: invitationError } = await client
-    .from("invitations")
-    .select("account_id")
-    .eq("invitation_id", invitationId)
-    .single();
-
-  if (invitationError) {
-    throw new Error(`Failed to fetch invitation: ${invitationError.message}`);
-  }
-
-  if (!invitation.account_id) {
-    throw new Error("초대 정보에 계정 ID가 없습니다.");
-  }
-
-  // account_id와 profile_id 조합으로 이미 멤버인지 확인
   const { data, error } = await client
-    .from("invitation_accepts")
-    .select("invitation_accept_id")
-    .eq("account_id", invitation.account_id)
+    .from("account_members")
+    .select("account_id")
+    .eq("account_id", accountId)
     .eq("profile_id", profileId)
     .maybeSingle();
 
