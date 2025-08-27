@@ -9,8 +9,9 @@ import {
   getLoggedInUserId,
   getLoggedInUserIdWithRedirectUrl,
   getLoggedInUserEmail,
+  getProfile,
 } from "~/features/auth/queries";
-import { useFetcher } from "react-router";
+import { redirect, useFetcher } from "react-router";
 import { Button } from "~/common/components/ui/button";
 import {
   Card,
@@ -28,8 +29,8 @@ import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Form } from "react-router";
 import { DateTime } from "luxon";
 import { toast } from "sonner";
-import AlreadyAccepted from "../components/already-accepted";
-import { useEffect } from "react";
+import { getAccountByIdAndProfileId } from "~/features/account/queries";
+import { joinAccount } from "~/features/account/mutations";
 
 export const meta: Route.MetaFunction = () => {
   return [{ title: "Verify Token | MOA" }];
@@ -38,8 +39,11 @@ export const meta: Route.MetaFunction = () => {
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { client } = makeSSRClient(request);
   const { token } = params;
+  const url = new URL(request.url);
+  const email = url.searchParams.get("email");
   const redirectUrl = `/auth/login?redirect=${encodeURIComponent(request.url)}`;
   const userId = await getLoggedInUserIdWithRedirectUrl(client, redirectUrl);
+  let needRequestInvite = false;
 
   // 여기부턴 로그인 상태
 
@@ -49,160 +53,80 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw new Error("Invitation not found");
   }
 
-  if (invitation.status !== "pending") {
-    throw new Error("Invitation not pending");
-  }
-
   const userEmail = await getLoggedInUserEmail(client);
-  if (invitation.email !== userEmail) {
-    throw new Error("Invitation email not match");
+  console.log("invitation", invitation);
+  console.log("userEmail", userEmail);
+  if (invitation.email === userEmail && userEmail === email) {
+    const accountMember = await getAccountByIdAndProfileId(
+      client,
+      invitation.account_id,
+      userId
+    );
+    // 이미 가계부 멤버면 리다이렉트
+    if (accountMember) {
+      return redirect(`/account/${invitation.account_id}/dashboard`);
+    }
+    // 만료된 초대가 아니면 가계부 멤버로 수락
+    if (
+      invitation.expires_at &&
+      DateTime.fromISO(invitation.expires_at, { zone: "utc" })
+        .diffNow()
+        .toMillis() > 0
+    ) {
+      await acceptInvitation(client, {
+        token: invitation.token,
+        email: userEmail,
+      });
+      const joinedAccount = await joinAccount(client, {
+        accountId: invitation.account_id,
+        userId,
+      });
+      return redirect(`/account/${joinedAccount.account_id}/dashboard`);
+    }
   }
-
-  // 이미 수락했는지 확인
-  const alreadyAccepted = await checkUserAlreadyAccepted(
-    client,
-    invitation.account_id,
-    userId
-  );
+  // 이미 로그인 상태고 초대 받은 이메일이 다르면 초대 요청
+  if (
+    invitation.email === email &&
+    userEmail !== email &&
+    userId !== invitation.inviter_id
+  ) {
+    needRequestInvite = true;
+  }
 
   return {
     invitation,
-
-    alreadyAccepted,
-    isExpired:
-      DateTime.fromISO(invitation.expires_at, { zone: "utc" })
-        .diffNow()
-        .toMillis() < 0,
-    isOwner: invitation.inviter_id === userId,
+    needRequestInvite,
   };
-};
-
-export const action = async ({ request, params }: Route.ActionArgs) => {
-  const { client } = makeSSRClient(request);
-  const { token } = params;
-
-  try {
-    const userEmail = await getLoggedInUserEmail(client);
-    if (!userEmail) {
-      throw new Error("User email not found");
-    }
-    const invitation = await getInvitationByToken(client, token);
-
-    // 초대 수락 처리
-    await acceptInvitation(client, invitation.token, userEmail);
-
-    return { success: true, message: "초대 수락 완료" };
-  } catch (error) {
-    return {
-      error:
-        error instanceof Error ? error.message : "Failed to accept invitation",
-      success: false,
-    };
-  }
 };
 
 export default function VerifyTokenPage({
   actionData,
   loaderData,
 }: Route.ComponentProps) {
-  const { invitation, alreadyAccepted, isExpired, isOwner } = loaderData;
-  const fetcher = useFetcher();
-  useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.success) {
-      toast.success(fetcher.data.message);
-    }
-    if (fetcher.state === "idle" && fetcher.data?.error) {
-      toast.error(fetcher.data.error);
-    }
-  }, [fetcher.state, fetcher.data]);
-
-  if (!isOwner && alreadyAccepted) {
-    return (
-      <AlreadyAccepted
-        token={invitation.token}
-        accountId={invitation.account_id}
-      />
-    );
-  }
-
+  const { invitation, needRequestInvite } = loaderData;
+  console.log("needRequestInvite", needRequestInvite);
+  console.log("invitation", invitation);
   return (
     <main className="px-4 py-6 h-full min-h-screen space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertCircle className="text-blue-500" />
-            초대 확인
+            만료된 초대
           </CardTitle>
           <CardDescription>
-            <span>{invitation.accounts?.name}에 초대되었습니다.</span>
+            초대 만료되었습니다. 다시 초대를 요청해주세요.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium">초대 정보</p>
-            <div className="text-sm text-muted-foreground space-y-1">
-              <p>{invitation.accounts?.name}</p>
-              <p>
-                {DateTime.fromISO(invitation.expires_at, {
-                  zone: "utc",
-                }).toRelative()}{" "}
-                만료
-              </p>
-            </div>
-          </div>
-
-          {actionData?.success && (
-            <Alert>
-              <CheckCircle className="h-4 w-4" />
-              <AlertTitle>초대 수락 완료!</AlertTitle>
-              <AlertDescription>
-                성공적으로 초대를 수락했습니다.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {actionData?.error && (
-            <Alert variant="destructive">
-              <XCircle className="h-4 w-4" />
-              <AlertTitle>오류 발생</AlertTitle>
-              <AlertDescription>{actionData.error}</AlertDescription>
-            </Alert>
-          )}
-
-          {isExpired && (
-            <Alert variant="destructive">
-              <XCircle className="h-4 w-4" />
-              <AlertTitle>초대 만료</AlertTitle>
-              <AlertDescription>초대가 만료되었습니다.</AlertDescription>
-            </Alert>
-          )}
-
-          {isOwner && invitation.status === "pending" && (
-            <fetcher.Form
-              method="post"
-              action={`/invite/${invitation.token}/close`}
-            >
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={fetcher.state !== "idle"}
-              >
-                초대 마감하기
-              </Button>
-            </fetcher.Form>
-          )}
-
-          {!isOwner && !alreadyAccepted && invitation.status === "pending" && (
-            <Form method="post">
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={fetcher.state !== "idle"}
-              >
-                초대 수락하기
-              </Button>
-            </Form>
-          )}
+          <Button
+            onClick={() => {
+              // TODO: 초대 요청 로직 추가(notification방식으로)
+              console.log("초대요청");
+            }}
+          >
+            초대 요청
+          </Button>
         </CardContent>
       </Card>
     </main>

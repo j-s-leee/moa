@@ -22,3 +22,29 @@ export const getLoggedInUserEmail = async (
   if (error || data.user === null) throw redirect("/auth/login");
   return data.user.email;
 };
+
+export const getProfileIdByEmail = async (
+  client: SupabaseClient<Database>,
+  email: string
+) => {
+  const { data, error } = await client
+    .from("profiles")
+    .select("profile_id")
+    .eq("email", email)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.profile_id ?? null;
+};
+
+export const getProfile = async (
+  client: SupabaseClient<Database>,
+  profileId: string
+) => {
+  const { data, error } = await client
+    .from("profiles")
+    .select("*")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+};

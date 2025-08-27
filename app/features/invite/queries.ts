@@ -1,6 +1,22 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "~/supa-client";
 
+export async function getInvitationsByAccountId(
+  client: SupabaseClient<Database>,
+  accountId: string
+) {
+  const { data, error } = await client
+    .from("invitations")
+    .select("*")
+    .eq("account_id", accountId);
+
+  if (error) {
+    throw new Error(`Failed to fetch invitations: ${error.message}`);
+  }
+
+  return data;
+}
+
 export async function getInvitationsByAccountIdAndProfileId(
   client: SupabaseClient<Database>,
   accountId: string,
