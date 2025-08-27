@@ -11,13 +11,18 @@ export default [
     ...prefix("/settings", [
       route("/theme", "features/settings/set-theme.tsx"),
     ]),
+    ...prefix("/member", [
+      route("/revoke", "api/member/revoke-member.tsx"),
+      route("/promote", "api/member/promote-member.tsx"),
+      route("/invite", "api/member/invite-member.tsx"),
+      route("/revoke-invite", "api/member/revoke-invite.tsx"),
+    ]),
   ]),
 
   index("features/home/home-page.tsx"),
 
   layout("features/invite/invite-layout.tsx", [
-    route("/invite/:token", "features/invite/page/verify-token-page.tsx"),
-    route("/invite/:token/close", "features/invite/page/close-invite-page.tsx"),
+    route("/verify/:token", "features/invite/page/verify-token-page.tsx"),
   ]),
 
   ...prefix("/auth", [
@@ -52,7 +57,6 @@ export default [
         route("/income", "features/manage/income-page.tsx"),
         route("/expense", "features/manage/expense-page.tsx"),
         route("/member", "features/manage/member-page.tsx"),
-        route("/invite", "features/account/page/invite-page.tsx"),
       ]),
     ]),
   ]),

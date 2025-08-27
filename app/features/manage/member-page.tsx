@@ -1,5 +1,5 @@
 import { Link, redirect, useFetcher } from "react-router";
-import { ChevronLeft, Trash2, UserPlus } from "lucide-react";
+import { ChevronDown, ChevronLeft, Send, Trash2, UserPlus } from "lucide-react";
 
 import { getAccountByIdAndProfileId } from "../account/queries";
 import { makeSSRClient } from "~/supa-client";
@@ -9,7 +9,10 @@ import { Button } from "~/common/components/ui/button";
 import { getMembers } from "./queries";
 import { Badge } from "~/common/components/ui/badge";
 import type { Route } from "./+types/member-page";
-import { getInvitationsByAccountIdAndProfileId } from "../invite/queries";
+import {
+  getInvitationsByAccountId,
+  getInvitationsByAccountIdAndProfileId,
+} from "../invite/queries";
 import {
   Tabs,
   TabsContent,
@@ -19,14 +22,39 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "~/common/components/ui/card";
 import { DateTime } from "luxon";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { removeMember } from "./mutations";
+import { Input } from "~/common/components/ui/input";
+import { Separator } from "~/common/components/ui/separator";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "~/common/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/common/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/common/components/ui/alert-dialog";
 
 export const meta: Route.MetaFunction = () => {
   return [
@@ -39,7 +67,12 @@ const formSchema = z.object({
   memberId: z.string().uuid(),
 });
 
+const inviteSchema = z.object({
+  email: z.string().email(),
+});
+
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
+  console.log("loader");
   const { client } = makeSSRClient(request);
   const userId = await getLoggedInUserId(client);
   const { accountId } = params;
@@ -52,11 +85,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     (member) => member.role === "owner" && member.profile_id === userId
   );
   if (isOwner) {
-    const invitations = await getInvitationsByAccountIdAndProfileId(
-      client,
-      accountId,
-      userId
-    );
+    const invitations = await getInvitationsByAccountId(client, accountId);
     return { accountId, members, isOwner, invitations, account };
   }
   return { accountId, members, isOwner, invitations: null, account };
@@ -95,6 +124,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
 export default function MemberPage({ loaderData }: Route.ComponentProps) {
   const fetcher = useFetcher();
+
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
       toast.success(fetcher.data.message);
@@ -106,113 +136,217 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
   const { accountId, members, isOwner, invitations, account } = loaderData;
   return (
     <main className="px-4 py-6 h-full min-h-screen space-y-6">
-      <div className="flex items-center gap-2">
-        <Link to={`/account`}>
-          <ChevronLeft className="size-6" />
-        </Link>
-        <h3 className="font-semibold text-lg">{account.name} 멤버 관리</h3>
-      </div>
-
-      <div>
-        <Tabs defaultValue="members">
-          <TabsList className="w-full">
-            <TabsTrigger value="members">멤버</TabsTrigger>
-            {isOwner && <TabsTrigger value="invitations">초대</TabsTrigger>}
-          </TabsList>
-          <TabsContent value="members" className="space-y-4">
-            <div className="flex items-center justify-between h-6">
-              <h1>멤버 목록</h1>
-            </div>
-            <Card>
-              <CardContent className="space-y-4">
-                {members.map((member) => (
-                  <div
-                    key={member.profile_id}
-                    className="flex items-center justify-between gap-2"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span>{member.profiles.name}</span>
-                        <Badge
-                          variant={
-                            member.role === "owner" ? "default" : "secondary"
-                          }
-                        >
-                          {member.role}
-                        </Badge>
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {member.profiles.email}
-                      </span>
-                    </div>
-                    {member.role !== "owner" && (
-                      <fetcher.Form method="post">
-                        <input
-                          type="hidden"
-                          name="memberId"
-                          value={member.profile_id}
-                        />
-                        <Button size="sm" variant="destructive" type="submit">
-                          <Trash2 />
-                          <span>revoke</span>
-                        </Button>
-                      </fetcher.Form>
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <h3 className="font-semibold text-lg">공유</h3>
+          </CardTitle>
+          <CardDescription>
+            <span className="font-semibold">{account.name}</span> 를 함께 사용할
+            멤버를 초대하세요.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           {isOwner && (
-            <TabsContent value="invitations" className="space-y-4">
-              <div className="flex items-center justify-between h-6">
-                <h1>초대 목록</h1>
-                <Button size="sm" asChild>
-                  <Link
-                    to={`/account/${accountId}/manage/invite`}
-                    className="flex items-center gap-2"
-                  >
-                    <UserPlus />
-                    <span>초대하기</span>
-                  </Link>
+            <fetcher.Form method="post" action="/api/member/invite">
+              <div className="flex items-center gap-2">
+                <input type="hidden" name="accountId" value={accountId} />
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="moa@gmail.com"
+                  className="w-full"
+                />
+                <Button size="icon" variant="outline" type="submit">
+                  <Send />
                 </Button>
               </div>
-              <Card>
-                <CardContent className="space-y-4">
-                  {invitations?.map((invitation) => (
-                    <Link
-                      to={`/invite/${invitation.token}`}
-                      key={invitation.invitation_id}
-                      className="block"
-                    >
-                      <div className="flex flex-col gap-2 bg-muted p-2 rounded-md">
-                        <Badge>
-                          {invitation.status === "pending"
-                            ? "대기"
-                            : invitation.status === "consumed"
-                            ? "수락"
-                            : "만료"}
-                        </Badge>
-                        <div className="flex justify-between">
-                          <span className="text-xs text-muted-foreground">
-                            {invitation.email}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {DateTime.fromISO(invitation.expires_at, {
-                              zone: "utc",
-                            }).toRelative()}{" "}
-                            만료
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
+            </fetcher.Form>
           )}
-        </Tabs>
-      </div>
+          <Separator />
+
+          {members.map((member) => (
+            <div
+              key={member.profile_id}
+              className="flex items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-4">
+                <Avatar className="size-10">
+                  <AvatarImage src={member.profiles.email ?? undefined} />
+                  <AvatarFallback>
+                    {member.profiles.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <span>{member.profiles.name}</span>
+                    {member.role !== "owner" && <Badge>{member.role}</Badge>}
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {member.profiles.email}
+                  </span>
+                </div>
+              </div>
+              {member.role !== "owner" && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <ChevronDown />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          관리자 변경
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>관리자 변경</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            관리자 변경하시겠습니까?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() =>
+                              fetcher.submit(
+                                {
+                                  memberId: member.profile_id,
+                                  accountId: accountId,
+                                },
+                                {
+                                  method: "POST",
+                                  action: "/api/member/promote",
+                                }
+                              )
+                            }
+                          >
+                            확인
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          제거
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>제거</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            제거하시겠습니까?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() =>
+                              fetcher.submit(
+                                {
+                                  memberId: member.profile_id,
+                                  accountId: accountId,
+                                },
+                                { method: "POST", action: "/api/member/revoke" }
+                              )
+                            }
+                          >
+                            확인
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          ))}
+          {invitations &&
+            invitations.map((invitation) => (
+              <div
+                key={invitation.invitation_id}
+                className="flex items-center justify-between gap-2"
+              >
+                <div className="flex items-center gap-4">
+                  <Avatar className="size-10">
+                    <AvatarImage src={invitation.email ?? undefined} />
+                    <AvatarFallback>
+                      {invitation.email.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <span>{invitation.email.split("@")[0]}</span>
+                      <Badge
+                        variant={
+                          invitation.status === "pending"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {invitation.status}
+                      </Badge>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {invitation.email}
+                    </span>
+                  </div>
+                  {isOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <ChevronDown />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              제거
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>제거</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                제거하시겠습니까?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>취소</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() =>
+                                  fetcher.submit(
+                                    {
+                                      invitationId: invitation.invitation_id,
+                                      accountId: accountId,
+                                    },
+                                    {
+                                      method: "POST",
+                                      action: "/api/member/revoke-invite",
+                                    }
+                                  )
+                                }
+                              >
+                                확인
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+              </div>
+            ))}
+        </CardContent>
+      </Card>
     </main>
   );
 }

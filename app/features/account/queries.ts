@@ -50,7 +50,7 @@ export const getAccountByIdAndProfileId = async (
     )
     .eq("account_id", accountId)
     .eq("profile_id", profileId)
-    .single();
+    .maybeSingle();
   if (error) throw new Error(error.message);
   return data?.accounts;
 };

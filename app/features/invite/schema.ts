@@ -33,5 +33,5 @@ export const invitations = pgTable("invitations", {
   created_at: timestamp().notNull().defaultNow(),
   expires_at: timestamp()
     .notNull()
-    .default(sql`now() + interval '1 day'`),
+    .default(sql`now() + interval '7 day'`),
 });

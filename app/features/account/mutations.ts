@@ -58,3 +58,20 @@ export const updateAccount = async (
 
   return data;
 };
+
+export const joinAccount = async (
+  client: SupabaseClient<Database>,
+  { accountId, userId }: { accountId: string; userId: string }
+) => {
+  const { data, error } = await client
+    .from("account_members")
+    .insert({ account_id: accountId, profile_id: userId, role: "member" })
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
