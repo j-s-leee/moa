@@ -26,12 +26,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
   );
 
   if (!success) {
-    return { error: error.message };
+    return { success: false, message: error.message };
   }
 
   const account = await getAccount(client, data.accountId);
   if (!account) {
-    return { error: "Account not found" };
+    return { success: false, message: "Account not found" };
   }
 
   const profileId = await getProfileIdByEmail(client, data.email);
@@ -42,6 +42,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
       data.accountId,
       profileId
     );
+
     if (accountMember) {
       return { success: false, message: "이미 가계부 멤버입니다." };
     }
@@ -54,7 +55,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   });
 
   if (!inviteData) {
-    return { error: "Failed to invite member" };
+    return { success: false, message: "Failed to invite member" };
   }
 
   const { success: emailSuccess, message: emailMessage } = await sendEmail({
@@ -64,9 +65,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
     to: data.email,
     subject: `[MOA] ${account.name} 가계부 초대`,
     html: `<p>You are invited to join the ${account.name} account</p>
-    <a href="http://localhost:5173/verify/${inviteData.token}?email=${data.email}">
+    <a href="http://localhost:5173/account/${data.accountId}/verify?email=${data.email}">
     click here to join the account
-    </a>`,
+    </a>
+    <p>verification code</p>
+    <p>${inviteData.token}</p>
+    `,
   });
 
   return { success: true, message: "초대 완료" };

@@ -45,6 +45,8 @@ export default [
     route("/delete", "features/account/page/delete-account-page.tsx"),
     ...prefix("/:accountId", [
       route("/edit", "features/account/page/edit-account-page.tsx"),
+      route("/invite", "features/account/page/invite-page.tsx"),
+      route("/verify", "features/account/page/verify-invite-page.tsx"),
       layout("common/components/bottom-nav-sidebar-layout.tsx", [
         route("/dashboard", "features/dashboard/dashboard-page.tsx"),
         route("/manage", "features/manage/manage-page.tsx"),

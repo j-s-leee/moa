@@ -75,3 +75,20 @@ export const joinAccount = async (
 
   return data;
 };
+
+export const revokeMember = async (
+  client: SupabaseClient<Database>,
+  { accountId, userId }: { accountId: string; userId: string }
+) => {
+  const { error } = await client
+    .from("account_members")
+    .delete()
+    .eq("account_id", accountId)
+    .eq("profile_id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  return { success: true };
+};
