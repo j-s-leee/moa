@@ -113,8 +113,13 @@ export const promoteMember = async (
     .eq("account_id", accountId)
     .eq("profile_id", userId);
 
-  if (error || ownerError) {
-    throw error || ownerError;
+  const { error: accountError } = await client
+    .from("accounts")
+    .update({ created_by: memberId, updated_at: new Date().toISOString() })
+    .eq("account_id", accountId);
+
+  if (error || ownerError || accountError) {
+    throw error || ownerError || accountError;
   }
 
   return { success: true };
