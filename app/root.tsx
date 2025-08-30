@@ -39,7 +39,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
   const [theme] = useTheme();
   const data = useRouteLoaderData<typeof loader>("root");
   return (
-    <html lang="en" className={cn(theme)}>
+    <html lang="en" className={cn(theme ?? "")}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

@@ -14,7 +14,6 @@ export default [
     ...prefix("/member", [
       route("/revoke", "api/member/revoke-member.tsx"),
       route("/promote", "api/member/promote-member.tsx"),
-      route("/invite", "api/member/invite-member.tsx"),
       route("/revoke-invite", "api/member/revoke-invite.tsx"),
     ]),
   ]),
