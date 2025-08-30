@@ -8,7 +8,8 @@ export async function getInvitationsByAccountId(
   const { data, error } = await client
     .from("invitations")
     .select("*")
-    .eq("account_id", accountId);
+    .eq("account_id", accountId)
+    .eq("status", "pending");
 
   if (error) {
     throw new Error(`Failed to fetch invitations: ${error.message}`);

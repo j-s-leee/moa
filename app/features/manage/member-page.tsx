@@ -1,24 +1,19 @@
-import { Link, redirect, useFetcher } from "react-router";
-import { ChevronDown, ChevronLeft, Send, Trash2, UserPlus } from "lucide-react";
+import { Form, redirect, useFetcher } from "react-router";
+import { ArrowLeftRight, Send, UserRoundX } from "lucide-react";
 
 import { getAccountByIdAndProfileId } from "../account/queries";
 import { makeSSRClient } from "~/supa-client";
-import { getLoggedInUserId } from "../auth/queries";
+import {
+  getLoggedInUserId,
+  getProfile,
+  getProfileIdByEmail,
+} from "../auth/queries";
 import { Button } from "~/common/components/ui/button";
 
-import { getMembers } from "./queries";
+import { getAccount, getMembers } from "./queries";
 import { Badge } from "~/common/components/ui/badge";
 import type { Route } from "./+types/member-page";
-import {
-  getInvitationsByAccountId,
-  getInvitationsByAccountIdAndProfileId,
-} from "../invite/queries";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "~/common/components/ui/tabs";
+import { getInvitationsByAccountId } from "../invite/queries";
 import {
   Card,
   CardContent,
@@ -26,24 +21,11 @@ import {
   CardHeader,
   CardTitle,
 } from "~/common/components/ui/card";
-import { DateTime } from "luxon";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useRef } from "react";
 import { z } from "zod";
-import { removeMember } from "./mutations";
 import { Input } from "~/common/components/ui/input";
 import { Separator } from "~/common/components/ui/separator";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "~/common/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/common/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "~/common/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +37,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/common/components/ui/alert-dialog";
+import type { Database } from "database.types";
+import { createInvitation } from "../invite/mutations";
+import { sendEmail } from "~/lib/email";
 
 export const meta: Route.MetaFunction = () => {
   return [
@@ -69,10 +54,10 @@ const formSchema = z.object({
 
 const inviteSchema = z.object({
   email: z.string().email(),
+  accountId: z.string().uuid(),
 });
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  console.log("loader");
   const { client } = makeSSRClient(request);
   const userId = await getLoggedInUserId(client);
   const { accountId } = params;
@@ -86,83 +71,98 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   );
   if (isOwner) {
     const invitations = await getInvitationsByAccountId(client, accountId);
-    return { accountId, members, isOwner, invitations, account };
+    return { accountId, members, isOwner, invitations, account, userId };
   }
-  return { accountId, members, isOwner, invitations: null, account };
+  return { accountId, members, isOwner, invitations: null, account, userId };
 };
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const { client } = makeSSRClient(request);
   const userId = await getLoggedInUserId(client);
-  const { accountId } = params;
-  const account = await getAccountByIdAndProfileId(client, accountId, userId);
-  if (!account) {
-    return redirect(`/account`);
-  }
-  const isOwner = account.created_by === userId;
-  if (!isOwner) {
-    return redirect(`/account`);
-  }
+  const profile = await getProfile(client, userId);
   const formData = await request.formData();
-  const { success, data, error } = formSchema.safeParse(
+  const { success, data, error } = inviteSchema.safeParse(
     Object.fromEntries(formData)
   );
+
   if (!success) {
-    return { success: false, error: error.message };
+    return { success: false, message: error.message };
   }
-  const { memberId } = data;
-  const { success: removeSuccess, message: removeMessage } = await removeMember(
-    client,
-    accountId,
-    memberId
-  );
-  if (!removeSuccess) {
-    return { success: false, error: removeMessage };
+
+  const account = await getAccount(client, data.accountId);
+  if (!account) {
+    return { success: false, message: "Account not found" };
   }
-  return { success: true, message: removeMessage };
+
+  const profileId = await getProfileIdByEmail(client, data.email);
+
+  if (profileId) {
+    const accountMember = await getAccountByIdAndProfileId(
+      client,
+      data.accountId,
+      profileId
+    );
+
+    if (accountMember) {
+      return { success: false, message: "이미 가계부 멤버입니다." };
+    }
+  }
+
+  const inviteData = await createInvitation(client, {
+    accountId: data.accountId,
+    email: data.email,
+    userId,
+  });
+
+  if (!inviteData) {
+    return { success: false, message: "Failed to invite member" };
+  }
+
+  const { success: emailSuccess, message: emailMessage } = await sendEmail({
+    from: profile?.name
+      ? `${profile?.name} via MOA <notify@mail.the-moa.top>`
+      : "noreply@mail.the-moa.top",
+    to: data.email,
+    subject: `[MOA] ${account.name} 가계부 초대`,
+    html: `<p>You are invited to join the ${account.name} account</p>
+    <a href="http://localhost:5173/account/${data.accountId}/verify?email=${data.email}">
+    click here to join the account
+    </a>
+    <p>verification code</p>
+    <p>${inviteData.token}</p>
+    `,
+  });
+
+  return { success: emailSuccess, message: emailMessage };
 };
 
 export default function MemberPage({ loaderData }: Route.ComponentProps) {
-  const fetcher = useFetcher();
+  const promoteFetcher = useFetcher();
+  const revokeFetcher = useFetcher();
+  const revokeInviteFetcher = useFetcher();
 
-  useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.success) {
-      toast.success(fetcher.data.message);
-    }
-    if (fetcher.state === "idle" && fetcher.data?.error) {
-      toast.error(fetcher.data.error);
-    }
-  }, [fetcher.state, fetcher.data]);
-  const { accountId, members, isOwner, invitations, account } = loaderData;
+  const inviteRef = useRef<HTMLFormElement>(null);
+
+  const { accountId, members, isOwner, invitations, account, userId } =
+    loaderData;
   return (
     <main className="px-4 py-6 h-full min-h-screen space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>
-            <h3 className="font-semibold text-lg">공유</h3>
+            <h3 className="font-semibold text-lg">
+              {isOwner ? "공유" : "멤버"}
+            </h3>
           </CardTitle>
           <CardDescription>
-            <span className="font-semibold">{account.name}</span> 를 함께 사용할
-            멤버를 초대하세요.
+            <span className="font-semibold">{account.name}</span>{" "}
+            {isOwner
+              ? "를 함께 사용할 멤버를 초대하세요."
+              : "를 함께 사용하는 멤버입니다."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isOwner && (
-            <fetcher.Form method="post" action="/api/member/invite">
-              <div className="flex items-center gap-2">
-                <input type="hidden" name="accountId" value={accountId} />
-                <Input
-                  name="email"
-                  type="email"
-                  placeholder="moa@gmail.com"
-                  className="w-full"
-                />
-                <Button size="icon" variant="outline" type="submit">
-                  <Send />
-                </Button>
-              </div>
-            </fetcher.Form>
-          )}
+          {isOwner && <InviteForm />}
           <Separator />
 
           {members.map((member) => (
@@ -172,7 +172,6 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
             >
               <div className="flex items-center gap-4">
                 <Avatar className="size-10">
-                  <AvatarImage src={member.profiles.email ?? undefined} />
                   <AvatarFallback>
                     {member.profiles.name.charAt(0)}
                   </AvatarFallback>
@@ -180,89 +179,22 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-2">
                     <span>{member.profiles.name}</span>
-                    {member.role !== "owner" && <Badge>{member.role}</Badge>}
+                    {member.role === "owner" && (
+                      <Badge variant="outline">👑</Badge>
+                    )}
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {member.profiles.email}
                   </span>
                 </div>
               </div>
-              {member.role !== "owner" && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <ChevronDown />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          관리자 변경
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>관리자 변경</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            관리자 변경하시겠습니까?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>취소</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() =>
-                              fetcher.submit(
-                                {
-                                  memberId: member.profile_id,
-                                  accountId: accountId,
-                                },
-                                {
-                                  method: "POST",
-                                  action: "/api/member/promote",
-                                }
-                              )
-                            }
-                          >
-                            확인
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          제거
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>제거</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            제거하시겠습니까?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>취소</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() =>
-                              fetcher.submit(
-                                {
-                                  memberId: member.profile_id,
-                                  accountId: accountId,
-                                },
-                                { method: "POST", action: "/api/member/revoke" }
-                              )
-                            }
-                          >
-                            확인
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+              {isOwner
+                ? member.role !== "owner" && (
+                    <MemberDialogs member={member} isOwner={isOwner} />
+                  )
+                : member.profile_id === userId && (
+                    <MemberDialogs member={member} isOwner={isOwner} />
+                  )}
             </div>
           ))}
           {invitations &&
@@ -273,7 +205,6 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
               >
                 <div className="flex items-center gap-4">
                   <Avatar className="size-10">
-                    <AvatarImage src={invitation.email ?? undefined} />
                     <AvatarFallback>
                       {invitation.email.charAt(0)}
                     </AvatarFallback>
@@ -295,58 +226,173 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
                       {invitation.email}
                     </span>
                   </div>
-                  {isOwner && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <ChevronDown />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              제거
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>제거</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                제거하시겠습니까?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>취소</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() =>
-                                  fetcher.submit(
-                                    {
-                                      invitationId: invitation.invitation_id,
-                                      accountId: accountId,
-                                    },
-                                    {
-                                      method: "POST",
-                                      action: "/api/member/revoke-invite",
-                                    }
-                                  )
-                                }
-                              >
-                                확인
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
                 </div>
+                {isOwner && <InvitationRevokeDialog invitation={invitation} />}
               </div>
             ))}
         </CardContent>
       </Card>
     </main>
   );
+
+  function InviteForm() {
+    return (
+      <Form method="post" ref={inviteRef}>
+        <div className="flex items-center gap-2">
+          <input type="hidden" name="accountId" value={accountId} />
+          <Input
+            name="email"
+            type="email"
+            placeholder="moa@gmail.com"
+            className="w-full"
+          />
+          <Button size="icon" variant="outline" type="submit">
+            <Send />
+          </Button>
+        </div>
+      </Form>
+    );
+  }
+
+  function MemberDialogs({
+    member,
+    isOwner,
+  }: {
+    member: {
+      profile_id: string;
+      role: "owner" | "member";
+      profiles: { email: string | null; name: string };
+    };
+    isOwner: boolean;
+  }) {
+    return (
+      <>
+        {isOwner && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <ArrowLeftRight />
+                👑
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>관리자 변경</AlertDialogTitle>
+                <AlertDialogDescription>
+                  관리자 변경하시겠습니까?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    promoteFetcher.submit(
+                      {
+                        memberId: member.profile_id,
+                        accountId: accountId,
+                      },
+                      {
+                        method: "POST",
+                        action: "/api/member/promote",
+                      }
+                    );
+                  }}
+                >
+                  확인
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+        {(isOwner || member.profile_id === userId) && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <UserRoundX />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {isOwner ? "제거" : "나가기"}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {isOwner ? "제거하시겠습니까?" : "나가시겠습니까?"}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() =>
+                    revokeFetcher.submit(
+                      {
+                        memberId: member.profile_id,
+                        accountId: accountId,
+                      },
+                      {
+                        method: "POST",
+                        action: "/api/member/revoke",
+                      }
+                    )
+                  }
+                >
+                  확인
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </>
+    );
+  }
+
+  function InvitationRevokeDialog({
+    invitation,
+  }: {
+    invitation: {
+      account_id: string | null;
+      created_at: string;
+      email: string;
+      expires_at: string;
+      invitation_id: number;
+      inviter_id: string | null;
+      status: Database["public"]["Enums"]["invitation_status"];
+      token: string;
+    };
+  }) {
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <UserRoundX />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>제거</AlertDialogTitle>
+            <AlertDialogDescription>제거하시겠습니까?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                revokeInviteFetcher.submit(
+                  {
+                    invitationId: invitation.invitation_id,
+                    accountId: accountId,
+                  },
+                  {
+                    method: "POST",
+                    action: "/api/member/revoke-invite",
+                  }
+                )
+              }
+            >
+              확인
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
 }

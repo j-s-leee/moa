@@ -75,3 +75,47 @@ export const joinAccount = async (
 
   return data;
 };
+
+export const revokeMember = async (
+  client: SupabaseClient<Database>,
+  { accountId, userId }: { accountId: string; userId: string }
+) => {
+  const { error } = await client
+    .from("account_members")
+    .delete()
+    .eq("account_id", accountId)
+    .eq("profile_id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  return { success: true };
+};
+
+export const promoteMember = async (
+  client: SupabaseClient<Database>,
+  {
+    accountId,
+    userId,
+    memberId,
+  }: { accountId: string; userId: string; memberId: string }
+) => {
+  const { error } = await client
+    .from("account_members")
+    .update({ role: "owner" })
+    .eq("account_id", accountId)
+    .eq("profile_id", memberId);
+
+  const { error: ownerError } = await client
+    .from("account_members")
+    .update({ role: "member" })
+    .eq("account_id", accountId)
+    .eq("profile_id", userId);
+
+  if (error || ownerError) {
+    throw error || ownerError;
+  }
+
+  return { success: true };
+};
