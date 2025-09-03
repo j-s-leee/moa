@@ -13,6 +13,8 @@ export const transactionTypes = pgEnum("transaction_types", [
   "expense",
 ]);
 
+export type TransactionType = (typeof transactionTypes.enumValues)[number];
+
 export const transactions = pgTable("transactions", {
   transaction_id: bigint({ mode: "number" })
     .primaryKey()

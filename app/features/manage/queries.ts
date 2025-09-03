@@ -60,7 +60,7 @@ export const getAccount = async (
   const { data, error } = await client
     .from("accounts")
     .select(
-      "account_id, name, currency, total_income, total_expense, total_savings"
+      "account_id, name, currency, total_income, total_expense, total_savings, total_budget"
     )
     .eq("account_id", accountId)
     .single();

@@ -9,6 +9,7 @@ export const goals = pgTable("goals", {
   name: text("name").notNull(),
   goal_amount: bigint({ mode: "number" }).notNull(),
   current_amount: bigint({ mode: "number" }).notNull().default(0),
+  monthly_savings: bigint({ mode: "number" }).notNull().default(0),
   goal_date: timestamp(),
   created_at: timestamp().notNull().defaultNow(),
   updated_at: timestamp().notNull().defaultNow(),
