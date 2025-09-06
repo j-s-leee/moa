@@ -128,8 +128,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     <a href="http://localhost:5173/account/${data.accountId}/verify?email=${data.email}">
     click here to join the account
     </a>
-    <p>verification code</p>
-    <p>${inviteData.token}</p>
+    <p>verification code</p><br/>
+    <p style="font-size: 16px; font-weight: bold;">${inviteData.token}</p>
     `,
   });
 

@@ -53,6 +53,8 @@ export default [
         route("/budget", "features/manage/budget-page.tsx"),
         route("/budget/add", "features/manage/budget-add-page.tsx"),
         route("/budget/:budgetId", "features/manage/budget-detail-page.tsx"),
+        route("/budget/:budgetId/edit", "features/manage/edit-budget-page.tsx"),
+        route("/budget/:budgetId/delete", "features/manage/delete-budget.tsx"),
         route("/goal", "features/goal/goal-page.tsx"),
         route("/goal/edit", "features/goal/edit-goal-page.tsx"),
         route("/goal/:goalId/delete", "features/goal/delete-saving-goal.tsx"),

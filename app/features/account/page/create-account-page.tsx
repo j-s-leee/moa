@@ -39,7 +39,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const { name } = data;
   const { account_id } = await createAccount(client, { name, userId });
-  return redirect(`/account/${account_id}/manage`);
+  return redirect(`/account/${account_id}/dashboard`);
 };
 
 export default function CreateAccountPage({

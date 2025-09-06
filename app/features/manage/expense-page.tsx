@@ -103,6 +103,7 @@ export default function ExpensePage({
   const fetcher = useFetcher();
   const { expenses, totalExpense } = loaderData;
   const ref = useRef<HTMLFormElement>(null);
+  const fieldErrors = fetcher.data?.fieldErrors;
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
@@ -134,18 +135,16 @@ export default function ExpensePage({
               type="text"
               placeholder="지출 항목명"
             />
+            {fieldErrors && "note" in fieldErrors && (
+              <span className="text-sm text-destructive">
+                {fieldErrors.note}
+              </span>
+            )}
             <Input name="amount" type="number" placeholder="금액" />
-            {actionData && "fieldErrors" in actionData && (
-              <ul className="text-sm text-destructive list-inside list-disc">
-                {actionData.fieldErrors.note &&
-                  actionData.fieldErrors.note.map((error) => (
-                    <li key={error}>{error}</li>
-                  ))}
-                {actionData.fieldErrors.amount &&
-                  actionData.fieldErrors.amount.map((error) => (
-                    <li key={error}>{error}</li>
-                  ))}
-              </ul>
+            {fieldErrors && "amount" in fieldErrors && (
+              <span className="text-sm text-destructive">
+                {fieldErrors.amount}
+              </span>
             )}
             <Button type="submit" className="w-full">
               추가

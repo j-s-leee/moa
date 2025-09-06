@@ -31,7 +31,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 const goalSchema = z.object({
   name: z.string().min(1, "목표 이름을 입력해주세요."),
   goal_amount: z.coerce.number().min(1, "목표 금액을 입력해주세요."),
-  current_amount: z.coerce.number().min(1, "현재 저축액을 입력해주세요."),
+  current_amount: z.coerce.number().min(0, "현재 저축액을 입력해주세요."),
   monthly_savings: z.coerce.number().min(1, "월 저축액을 입력해주세요."),
 });
 

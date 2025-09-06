@@ -7,11 +7,11 @@ import {
 import { CardTitle } from "~/common/components/ui/card";
 import { Progress } from "~/common/components/ui/progress";
 import { cn, formatCurrency } from "~/lib/utils";
-import { Link, useLoaderData } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import { makeSSRClient } from "~/supa-client";
 import type { Route } from "./+types/budget-page";
 import { Button } from "~/common/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { getBudgets } from "./queries";
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -23,6 +23,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
 export default function BudgetPage() {
   const { accountId, budgets } = useLoaderData<typeof loader>();
+
   return (
     <main className="h-full min-h-screen space-y-6">
       {/* 비정기 지출 현황 */}
@@ -52,9 +53,9 @@ export default function BudgetPage() {
                     to={`/account/${accountId}/budget/${budget.budget_id}`}
                     className="bg-accent space-y-2 rounded-lg p-3 block"
                   >
-                    <span className="font-medium pb-2 block">
-                      {budget.name}
-                    </span>
+                    <div className=" pb-2 flex items-center justify-between">
+                      <span className="font-medium">{budget.name}</span>
+                    </div>
                     <div className="flex justify-between items-center text-sm">
                       <span>사용: {formatCurrency(budget.current_amount)}</span>
                       <span>예산: {formatCurrency(budget.budget_amount)}</span>

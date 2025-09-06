@@ -11,6 +11,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/common/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export function DatePicker({
   label,
@@ -19,6 +24,8 @@ export function DatePicker({
   placeholder,
   bgColor,
   defaultDate,
+  date,
+  setDate,
 }: {
   label: string;
   id: string;
@@ -26,9 +33,10 @@ export function DatePicker({
   placeholder: string;
   bgColor?: string;
   defaultDate?: Date;
+  date?: Date;
+  setDate?: (date: Date) => void;
 }) {
   const [open, setOpen] = React.useState(false);
-  const [date, setDate] = React.useState<Date | undefined>(defaultDate);
 
   // 로컬 타임존을 유지하면서 YYYY-MM-DD 형식으로 변환
   const formatDateForInput = (date: Date) => {
@@ -51,8 +59,8 @@ export function DatePicker({
         name={name}
         value={date ? formatDateForInput(date) : ""}
       />
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
             id={id}
@@ -62,19 +70,23 @@ export function DatePicker({
             {date ? date.toLocaleDateString() : placeholder}
             <ChevronDownIcon />
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-auto overflow-hidden p-0"
+          align="start"
+        >
           <Calendar
             mode="single"
             selected={date}
             captionLayout="dropdown"
             onSelect={(date) => {
-              setDate(date);
+              setDate?.(date);
               setOpen(false);
             }}
+            required
           />
-        </PopoverContent>
-      </Popover>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

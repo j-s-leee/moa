@@ -9,7 +9,7 @@ import { Trash2 } from "lucide-react";
 import type { Route } from "./+types/income-page";
 import { formatCurrency } from "~/lib/utils";
 import { getIncomes, getTotalIncome } from "./queries";
-import { data, useFetcher, type MetaFunction } from "react-router";
+import { data, Form, useFetcher, type MetaFunction } from "react-router";
 import { makeSSRClient, type Database } from "~/supa-client";
 import { Input } from "~/common/components/ui/input";
 import { z } from "zod";
@@ -29,7 +29,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { client, headers } = makeSSRClient(request);
   const incomes = await getIncomes(client, accountId);
   const totalIncome = await getTotalIncome(client, accountId);
-
   return data({ incomes, accountId, totalIncome }, { headers });
 };
 
@@ -97,6 +96,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       return handlePost({ client, formData, accountId });
     case "DELETE":
       return handleDelete({ client, formData, accountId });
+    default:
+      return { success: false, message: "Unsupported method" };
   }
 };
 
@@ -120,16 +121,16 @@ export default function IncomePage({
   };
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.success) {
+    if (actionData && "success" in actionData && actionData.success) {
       ref.current?.reset();
     }
-  }, [fetcher.state]);
+  }, [actionData]);
 
   return (
     <main className="h-full min-h-screen space-y-6">
       <Card className="shadow-none">
         <CardContent>
-          <fetcher.Form method="post" ref={ref} className="space-y-3">
+          <Form method="post" ref={ref} className="space-y-3">
             <input type="hidden" name="_method" value="CREATE" />
             <Input
               id="note"
@@ -137,11 +138,21 @@ export default function IncomePage({
               type="text"
               placeholder="수입 항목명"
             />
+            {actionData && "fieldErrors" in actionData && (
+              <span className="text-sm text-destructive">
+                {actionData.fieldErrors.note}
+              </span>
+            )}
             <Input name="amount" type="number" placeholder="금액" />
+            {actionData && "fieldErrors" in actionData && (
+              <span className="text-sm text-destructive">
+                {actionData.fieldErrors.amount}
+              </span>
+            )}
             <Button type="submit" className="w-full">
               추가
             </Button>
-          </fetcher.Form>
+          </Form>
         </CardContent>
       </Card>
       <Card className="rounded-2xl shadow-none border">

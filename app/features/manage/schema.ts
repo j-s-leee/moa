@@ -48,7 +48,9 @@ export const budget_expenses = pgTable("budget_expenses", {
   budget_expense_id: bigint({ mode: "number" })
     .primaryKey()
     .generatedAlwaysAsIdentity(),
-  budget_id: bigint({ mode: "number" }).references(() => budgets.budget_id),
+  budget_id: bigint({ mode: "number" }).references(() => budgets.budget_id, {
+    onDelete: "cascade",
+  }),
   amount: bigint({ mode: "number" }).notNull(),
   note: text().notNull(),
   occurred_at: timestamp().notNull().defaultNow(),

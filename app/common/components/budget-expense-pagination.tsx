@@ -12,7 +12,7 @@ import { useSearchParams } from "react-router";
 export default function BudgetExpensePagination({
   totalPages,
 }: {
-  totalPages: number;
+  totalPages: number | undefined;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get("page") ?? 1);
@@ -58,7 +58,7 @@ export default function BudgetExpensePagination({
               {page}
             </PaginationLink>
           </PaginationItem>
-          {page === totalPages ? null : (
+          {page === totalPages || !totalPages ? null : (
             <>
               <PaginationItem>
                 <PaginationLink

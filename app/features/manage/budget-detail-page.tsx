@@ -5,12 +5,13 @@ import {
   isRouteErrorResponse,
   Link,
   useFetcher,
+  useNavigation,
 } from "react-router";
 import { cn, formatCurrency } from "~/lib/utils";
 import { Progress } from "~/common/components/ui/progress";
 import { Button } from "~/common/components/ui/button";
 import { DatePicker } from "~/common/components/date-picker";
-import { ChevronLeft, Trash2 } from "lucide-react";
+import { ChevronLeft, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import type { Route } from "./+types/budget-detail-page";
 import { z } from "zod";
 import {
@@ -23,11 +24,17 @@ import { makeSSRClient, type Database } from "~/supa-client";
 import { Input } from "~/common/components/ui/input";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createBudgetExpense, deleteBudgetExpense } from "./mutations";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "~/common/components/ui/dialog";
 
 export const meta: Route.MetaFunction = ({ data }: Route.MetaArgs) => {
   return [
-    { title: `${data?.budget.name || "Budget"} | MOA` },
+    { title: `${data?.budget?.name || "Budget"} | MOA` },
     { name: "description", content: "Budget page" },
   ];
 };
@@ -53,17 +60,20 @@ const deleteSchema = z.object({
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
-  const { success, data: parsedParams } = paramSchema.safeParse(params);
-  const { success: searchParamsSuccess, data: parsedSearchParams } =
-    searchParamsSchema.safeParse(Object.fromEntries(url.searchParams));
+  const { success, data: parsedParams, error } = paramSchema.safeParse(params);
+  const {
+    success: searchParamsSuccess,
+    data: parsedSearchParams,
+    error: searchParamsError,
+  } = searchParamsSchema.safeParse(Object.fromEntries(url.searchParams));
   if (!success || !searchParamsSuccess) {
-    throw data(
-      {
-        error_code: "INVALID_PARAMS",
-        error_message: "Invalid Params",
+    return {
+      success: false,
+      fieldErrors: {
+        ...(error?.flatten().fieldErrors || {}),
+        ...(searchParamsError?.flatten().fieldErrors || {}),
       },
-      { status: 400 }
-    );
+    };
   }
   const { budgetId, accountId } = parsedParams;
   const { page } = parsedSearchParams;
@@ -71,19 +81,15 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const budget = await getBudget(client, budgetId);
   const expenses = await getBudgetExpenses({ client, budgetId, page });
   const totalPages = await getBudgetExpensesCount({ client, budgetId });
-  return data(
-    {
-      budgetId,
-      accountId,
-      budget,
-      page,
-      expenses,
-      totalPages,
-    },
-    {
-      headers,
-    }
-  );
+
+  return {
+    budgetId,
+    accountId,
+    budget,
+    page,
+    expenses,
+    totalPages,
+  };
 };
 
 const handlePost = async ({
@@ -99,14 +105,15 @@ const handlePost = async ({
     Object.fromEntries(formData)
   );
   if (!success) {
-    return { fieldErrors: error.flatten().fieldErrors };
+    return { success: false, fieldErrors: error.flatten().fieldErrors };
   }
-  return await createBudgetExpense(client, {
+  await createBudgetExpense(client, {
     budgetId,
     amount: data.amount,
     note: data.note,
     occurredAt: new Date(data.date),
   });
+  return { success: true };
 };
 
 const handleDelete = async ({
@@ -122,23 +129,18 @@ const handleDelete = async ({
   if (!success) {
     return { success: false, message: "Invalid data" };
   }
-  return await deleteBudgetExpense(client, {
+  await deleteBudgetExpense(client, {
     budgetExpenseId: data.budgetExpenseId,
   });
+  return { success: true };
 };
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const { client } = makeSSRClient(request);
   const formData = await request.formData();
-  const { success, data: parsedParams } = paramSchema.safeParse(params);
+  const { success, data: parsedParams, error } = paramSchema.safeParse(params);
   if (!success) {
-    throw data(
-      {
-        error_code: "INVALID_PARAMS",
-        error_message: "Invalid Params",
-      },
-      { status: 400 }
-    );
+    return { success: false, fieldErrors: error.flatten().fieldErrors };
   }
   const _method = formData.get("_method")?.toString().toUpperCase();
 
@@ -156,7 +158,32 @@ export default function BudgetPage({
 }: Route.ComponentProps) {
   const ref = useRef<HTMLFormElement>(null);
   const fetcher = useFetcher();
+  const navigation = useNavigation();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [date, setDate] = useState<Date>();
+  const fieldErrors = fetcher.data?.fieldErrors;
+
   const { budget, expenses, page, totalPages, accountId } = loaderData;
+
+  // budget이 없는 경우 에러 처리
+  if (!budget) {
+    return (
+      <main className="h-full min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">
+            예산을 찾을 수 없습니다
+          </h2>
+          <Link
+            to={`/account/${accountId}/budget`}
+            className="text-blue-500 hover:underline"
+          >
+            예산 목록으로 돌아가기
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   const usageRate = (budget.current_amount / budget.budget_amount) * 100;
   const remaining = budget.budget_amount - budget.current_amount;
   const deleteExpense = (id: number) => {
@@ -171,20 +198,64 @@ export default function BudgetPage({
     );
   };
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    console.log(date);
+    if (date) {
+      formData.set("date", date.toISOString());
+    }
+    console.log(formData);
+    fetcher.submit(formData, {
+      method: "POST",
+    });
+  };
+
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
       ref.current?.reset();
+      setIsDialogOpen(false);
     }
-  }, [fetcher.state]);
+  }, [fetcher.state, fetcher.data]);
+
+  useEffect(() => {
+    setDate(new Date());
+  }, [isDialogOpen]);
 
   return (
     <main className="h-full min-h-screen space-y-6">
       <div className="flex flex-col space-y-4 flex-1 min-h-0">
-        <div className="flex items-center gap-2">
-          <Link to={`/account/${accountId}/budget`}>
+        <div className="flex items-center gap-2 justify-between">
+          <Link
+            to={`/account/${accountId}/budget`}
+            className="flex items-center gap-2"
+          >
             <ChevronLeft className="size-6" />
           </Link>
-          <h3 className="font-semibold text-lg">{budget.name} 지출 내역</h3>
+
+          <Button variant="secondary">
+            <Link
+              to={`/account/${accountId}/budget/${budget.budget_id}/edit`}
+              className="flex items-center gap-2 hover:underline"
+            >
+              <Pencil className="size-4" />
+              수정
+            </Link>
+          </Button>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="size-4" />
+            추가
+          </Button>
+          <fetcher.Form
+            method="post"
+            action={`/account/${accountId}/budget/${budget.budget_id}/delete`}
+          >
+            <Button variant="destructive" type="submit">
+              <Trash2 className="w-4 h-4" />
+              삭제
+            </Button>
+          </fetcher.Form>
         </div>
         <div className="flex flex-col space-y-4 flex-1 min-h0">
           <Card className="w-full p-4 rounded-lg text-left border">
@@ -220,43 +291,72 @@ export default function BudgetPage({
               </div>
             </CardContent>
           </Card>
-
-          <fetcher.Form
-            ref={ref}
-            className="flex flex-col gap-3 border rounded-lg p-4"
-            method="post"
-          >
-            <input type="hidden" name="_method" value="CREATE" />
-            <Input name="amount" type="number" placeholder="금액" />
-            <Input name="note" type="text" placeholder="설명" />
-            <DatePicker
-              label=""
-              id="date"
-              name="date"
-              placeholder="날짜 선택"
-            />
-            {actionData && "fieldErrors" in actionData && (
-              <ul className="text-sm text-destructive list-inside list-disc">
-                {actionData.fieldErrors.amount &&
-                  actionData.fieldErrors.amount.map((error) => (
-                    <li key={error}>{error}</li>
-                  ))}
-                {actionData.fieldErrors.note &&
-                  actionData.fieldErrors.note.map((error) => (
-                    <li key={error}>{error}</li>
-                  ))}
-                {actionData.fieldErrors.date &&
-                  actionData.fieldErrors.date.map((error) => (
-                    <li key={error}>{error}</li>
-                  ))}
-              </ul>
-            )}
-            <Button type="submit">추가</Button>
-          </fetcher.Form>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>새 지출 추가</DialogTitle>
+              </DialogHeader>
+              <fetcher.Form
+                ref={ref}
+                className="flex flex-col gap-3 border rounded-lg p-4"
+                method="post"
+              >
+                <input type="hidden" name="_method" value="CREATE" />
+                <Input name="amount" type="number" placeholder="금액" />
+                {fieldErrors?.amount && (
+                  <span className="text-sm text-destructive">
+                    {fieldErrors.amount}
+                  </span>
+                )}
+                <Input name="note" type="text" placeholder="설명" />
+                {fieldErrors?.note && (
+                  <span className="text-sm text-destructive">
+                    {fieldErrors.note}
+                  </span>
+                )}
+                {/* <Input
+                  name="date"
+                  type="date"
+                  placeholder="날짜"
+                  defaultValue={new Date().toISOString().split("T")[0]}
+                /> */}
+                <DatePicker
+                  label=""
+                  id="date"
+                  name="date"
+                  placeholder="날짜 선택"
+                  defaultDate={new Date()}
+                  date={date}
+                  setDate={setDate}
+                />
+                {fieldErrors?.date && (
+                  <span className="text-sm text-destructive">
+                    {fieldErrors.date}
+                  </span>
+                )}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={navigation.state === "submitting"}
+                >
+                  {fetcher.state === "submitting" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "추가"
+                  )}
+                </Button>
+              </fetcher.Form>
+            </DialogContent>
+          </Dialog>
+          {/* 
+          <ExpenseFormDialog
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+          /> */}
 
           <div className="flex-1 flex flex-col min-h-0">
             <div className="space-y-3 overflow-auto flex-1">
-              {expenses.map((expense) => (
+              {expenses?.map((expense) => (
                 <div
                   key={expense.budget_expense_id}
                   className="flex items-center justify-between p-3 rounded-lg border-none bg-muted/60 dark:bg-muted/80"

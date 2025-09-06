@@ -118,6 +118,41 @@ export const createBudget = async (
   return { success: true, message: "예산 추가 완료" };
 };
 
+export const deleteBudget = async (
+  client: SupabaseClient<Database>,
+  budgetId: number
+) => {
+  const { error } = await client
+    .from("budgets")
+    .delete()
+    .eq("budget_id", budgetId);
+  if (error) throw error;
+  return { success: true, message: "예산 삭제 완료" };
+};
+
+export const updateBudget = async (
+  client: SupabaseClient<Database>,
+  {
+    budgetId,
+    budgetName,
+    amount,
+  }: {
+    budgetId: number;
+    budgetName: string;
+    amount: number;
+  }
+) => {
+  const { error } = await client
+    .from("budgets")
+    .update({
+      name: budgetName,
+      budget_amount: amount,
+    })
+    .eq("budget_id", budgetId);
+  if (error) throw error;
+  return { success: true, message: "예산 수정 완료" };
+};
+
 export const createBudgetExpense = async (
   client: SupabaseClient<Database>,
   {
