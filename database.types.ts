@@ -67,6 +67,7 @@ export type Database = {
           created_by: string
           currency: string
           name: string
+          total_budget: number
           total_expense: number
           total_income: number
           total_savings: number
@@ -78,6 +79,7 @@ export type Database = {
           created_by: string
           currency?: string
           name: string
+          total_budget?: number
           total_expense?: number
           total_income?: number
           total_savings?: number
@@ -89,6 +91,7 @@ export type Database = {
           created_by?: string
           currency?: string
           name?: string
+          total_budget?: number
           total_expense?: number
           total_income?: number
           total_savings?: number
@@ -195,6 +198,7 @@ export type Database = {
           goal_amount: number
           goal_date: string | null
           goal_id: number
+          monthly_savings: number
           name: string
           updated_at: string
         }
@@ -205,6 +209,7 @@ export type Database = {
           goal_amount: number
           goal_date?: string | null
           goal_id?: never
+          monthly_savings?: number
           name: string
           updated_at?: string
         }
@@ -215,6 +220,7 @@ export type Database = {
           goal_amount?: number
           goal_date?: string | null
           goal_id?: never
+          monthly_savings?: number
           name?: string
           updated_at?: string
         }

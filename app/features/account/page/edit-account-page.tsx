@@ -34,7 +34,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   const result = await updateAccount(client, { name, userId, accountId });
 
   if (result) {
-    return redirect(`/account/${accountId}/manage`);
+    return redirect(`/account/${accountId}/dashboard`);
   }
   return { error: "Failed to update account" };
 };

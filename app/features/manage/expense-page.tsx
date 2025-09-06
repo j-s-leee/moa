@@ -5,22 +5,24 @@ import {
   CardTitle,
 } from "~/common/components/ui/card";
 import { Button } from "~/common/components/ui/button";
-import { ChevronLeft, Plus, Trash2 } from "lucide-react";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogTitle,
-  DialogTrigger,
-} from "~/common/components/ui/dialog";
-import { FormInput } from "~/common/components/form-input";
+import { Trash2 } from "lucide-react";
 import type { Route } from "./+types/expense-page";
 import { formatCurrency } from "~/lib/utils";
 import { getExpenses, getTotalExpense } from "./queries";
-import { data, Link } from "react-router";
-import { makeSSRClient } from "~/supa-client";
+import { data, useFetcher, type MetaFunction } from "react-router";
+import { makeSSRClient, type Database } from "~/supa-client";
+import z from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createExpense, deleteTransaction } from "./mutations";
+import { Input } from "~/common/components/ui/input";
+import { useEffect, useRef } from "react";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Expense | MOA" },
+    { name: "description", content: "Expense page" },
+  ];
+};
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { accountId } = params;
@@ -30,82 +32,138 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   return data({ expenses, totalExpense, accountId }, { headers });
 };
 
-interface Expense {
-  transaction_id: number;
-  note: string;
-  amount: number;
-  occurred_at: string;
-}
+const expenseSchema = z.object({
+  note: z.string().min(1, "항목명을 입력해주세요."),
+  amount: z.coerce.number().min(1, "금액을 입력해주세요."),
+});
 
-export default function ExpensePage({ loaderData }: Route.ComponentProps) {
-  const { expenses, totalExpense, accountId } = loaderData || {
-    expenses: [],
-    totalExpense: 0,
-    accountId: "",
-  };
+const deleteSchema = z.object({
+  transaction_id: z.coerce.number(),
+});
+
+const handlePost = async ({
+  client,
+  formData,
+  accountId,
+}: {
+  client: SupabaseClient<Database>;
+  formData: FormData;
+  accountId: string;
+}) => {
+  const { success, data, error } = expenseSchema.safeParse(
+    Object.fromEntries(formData)
+  );
+  if (!success) {
+    return { fieldErrors: error.flatten().fieldErrors };
+  }
+  return await createExpense(client, {
+    accountId,
+    note: data.note,
+    amount: data.amount,
+  });
+};
+
+const handleDelete = async ({
+  client,
+  formData,
+  accountId,
+}: {
+  client: SupabaseClient<Database>;
+  formData: FormData;
+  accountId: string;
+}) => {
+  const { success, data, error } = deleteSchema.safeParse(
+    Object.fromEntries(formData)
+  );
+  if (!success) {
+    return { success: false, message: "Invalid data" };
+  }
+  return await deleteTransaction(client, accountId, data.transaction_id);
+};
+
+export const action = async ({ request, params }: Route.ActionArgs) => {
+  const { client } = makeSSRClient(request);
+  const formData = await request.formData();
+  const { accountId } = params;
+  const _method = formData.get("_method")?.toString().toUpperCase();
+  switch (_method) {
+    case "CREATE":
+      return await handlePost({ client, formData, accountId });
+    case "DELETE":
+      return await handleDelete({ client, formData, accountId });
+    default:
+      return { success: false, message: "Unsupported method" };
+  }
+};
+
+export default function ExpensePage({
+  actionData,
+  loaderData,
+}: Route.ComponentProps) {
+  const fetcher = useFetcher();
+  const { expenses, totalExpense } = loaderData;
+  const ref = useRef<HTMLFormElement>(null);
+  const fieldErrors = fetcher.data?.fieldErrors;
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.success) {
+      ref.current?.reset();
+    }
+  }, [fetcher.state]);
 
   const deleteExpense = (id: number) => {
-    console.log(id);
+    fetcher.submit(
+      {
+        transaction_id: id,
+        _method: "DELETE",
+      },
+      {
+        method: "POST",
+      }
+    );
   };
 
   return (
-    <main className="px-4 py-6 h-full min-h-screen">
-      <div className="flex items-center gap-2 mb-4">
-        <Link to={`/account/${accountId}/manage`}>
-          <ChevronLeft className="size-6" />
-        </Link>
-        <h3 className="font-semibold text-lg">지출 내역</h3>
-      </div>
+    <main className="h-full min-h-screen space-y-6">
+      <Card className="shadow-none">
+        <CardContent>
+          <fetcher.Form method="post" ref={ref} className="space-y-3">
+            <input type="hidden" name="_method" value="CREATE" />
+            <Input
+              id="note"
+              name="note"
+              type="text"
+              placeholder="지출 항목명"
+            />
+            {fieldErrors && "note" in fieldErrors && (
+              <span className="text-sm text-destructive">
+                {fieldErrors.note}
+              </span>
+            )}
+            <Input name="amount" type="number" placeholder="금액" />
+            {fieldErrors && "amount" in fieldErrors && (
+              <span className="text-sm text-destructive">
+                {fieldErrors.amount}
+              </span>
+            )}
+            <Button type="submit" className="w-full">
+              추가
+            </Button>
+          </fetcher.Form>
+        </CardContent>
+      </Card>
       <Card className="rounded-2xl shadow-none border">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">
               총 고정 지출 : {formatCurrency(totalExpense)}
             </h3>
-            <Dialog>
-              <form action={`/account/${accountId}/manage/expense`}>
-                <DialogTrigger asChild>
-                  <Button variant="secondary" size="icon">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogTitle>월 지출 추가</DialogTitle>
-                  <DialogDescription>
-                    월 지출 내역을 추가할 수 있습니다.
-                  </DialogDescription>
-
-                  <div className="grid gap-4">
-                    <FormInput
-                      label="지출 내용"
-                      id="content"
-                      name="content"
-                      type="text"
-                      placeholder="지출 내용"
-                    />
-                    <FormInput
-                      label="금액"
-                      id="amount"
-                      name="amount"
-                      type="number"
-                      placeholder="금액"
-                    />
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">취소</Button>
-                    </DialogClose>
-                    <Button type="submit">추가</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </form>
-            </Dialog>
           </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-3">
           {expenses &&
-            expenses.map((expense: Expense) => (
+            expenses.map((expense) => (
               <div
                 key={expense.transaction_id}
                 className="flex items-center justify-between p-3 rounded-lg border-none bg-muted/50 dark:bg-muted/20"

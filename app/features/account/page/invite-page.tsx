@@ -2,7 +2,6 @@ import { Resend } from "resend";
 import type { Route } from "./+types/invite-page";
 import { AlertCircleIcon, ChevronLeft } from "lucide-react";
 import { Link, redirect, useFetcher } from "react-router";
-import { Form } from "react-router";
 import { FormInput } from "~/common/components/form-input";
 import {
   Alert,

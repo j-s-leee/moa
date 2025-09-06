@@ -16,6 +16,7 @@ export const accounts = pgTable("accounts", {
   total_income: bigint({ mode: "number" }).notNull().default(0),
   total_expense: bigint({ mode: "number" }).notNull().default(0),
   total_savings: bigint({ mode: "number" }).notNull().default(0),
+  total_budget: bigint({ mode: "number" }).notNull().default(0),
   created_by: uuid()
     .references(() => profiles.profile_id, { onDelete: "cascade" })
     .notNull(),

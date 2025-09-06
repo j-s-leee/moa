@@ -96,7 +96,7 @@ export function NavSecondary({
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to={`/account/${item.account_id}/manage/member`}>
+                      <Link to={`/account/${item.account_id}/member`}>
                         <Users className="mr-2 h-4 w-4" />
                         <span>멤버 관리</span>
                       </Link>

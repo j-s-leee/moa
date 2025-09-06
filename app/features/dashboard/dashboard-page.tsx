@@ -4,47 +4,15 @@ import {
   CardHeader,
   CardTitle,
 } from "~/common/components/ui/card";
-import { Calendar, Plus, PiggyBank, TrendingUp } from "lucide-react";
 import { cn, formatCurrency } from "~/lib/utils";
-import {
-  savingsGoal,
-  irregularCategories,
-  initialMonthlyIncomes,
-  initialMonthlyExpenses,
-  initialIrregularExpenses,
-  getCategorySpent,
-  calculateMonthlySavingsPotential,
-  calculateMonthsToGoal,
-} from "~/lib/testData";
-import { Button } from "~/common/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/common/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "~/common/components/ui/select";
-import { DatePicker } from "~/common/components/date-picker";
+
 import { Progress } from "~/common/components/ui/progress";
-import { FormInput } from "~/common/components/form-input";
-import { Label } from "~/common/components/ui/label";
 import { data, type MetaFunction } from "react-router";
 import type { Route } from "./+types/dashboard-page";
 import { getAccount, getBudgets } from "../manage/queries";
-import { getSavingsGoal } from "../goal/queries";
+import { getSavings } from "../goal/queries";
 import { makeSSRClient } from "~/supa-client";
+import { Alert, AlertDescription } from "~/common/components/ui/alert";
 
 export const meta: MetaFunction = () => {
   return [
@@ -56,12 +24,12 @@ export const meta: MetaFunction = () => {
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { client, headers } = makeSSRClient(request);
   const account = await getAccount(client, params.accountId);
-  const savingsGoal = await getSavingsGoal(client, params.accountId);
+  const savingPlans = await getSavings(client, params.accountId);
   const budgets = await getBudgets(client, params.accountId);
 
   return data(
     {
-      savingsGoal,
+      savingPlans,
       account,
       budgets,
     },
@@ -72,91 +40,129 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 };
 
 export default function DashboardPage({ loaderData }: Route.ComponentProps) {
-  const { account, savingsGoal, budgets } = loaderData;
+  const { account, savingPlans, budgets } = loaderData;
 
   return (
-    <div className="space-y-6">
-      {/* 저축 진행률 카드 */}
-      {savingsGoal && (
-        <Card className="rounded-2xl shadow-lg gap-2 bg-gradient-to-br from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 border-none text-white">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">저축 목표 진행률</h2>
-              <PiggyBank className="size-6" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="">현재 금액</span>
-              <span className="text-xl font-bold">
-                {formatCurrency(savingsGoal.current_amount)}
-              </span>
+    <main className="h-full min-h-screen space-y-6">
+      <Card className="p-6 rounded-2xl shadow-none border gap-2">
+        <CardHeader className="px-0">
+          <CardTitle className="text-lg flex items-center gap-2">
+            재무 현황 요약
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 px-0">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="bg-green-50 p-3 rounded-lg">
+              <div className="text-green-600 font-medium">월 총수입</div>
+              <div className="font-bold text-green-800">
+                {formatCurrency(account.total_income)}
+              </div>
             </div>
-            <Progress
-              value={
-                (savingsGoal.current_amount / savingsGoal.goal_amount) * 100
-              }
-              className="h-3 [&>div]:bg-white bg-muted/20"
-            />
-            <div className="flex justify-between items-center text-sm">
-              <span>
-                {(
-                  (savingsGoal.current_amount / savingsGoal.goal_amount) *
-                  100
-                ).toFixed(1)}
-                % 달성
-              </span>
-              <span>목표: {formatCurrency(savingsGoal.goal_amount)}</span>
+            <div className="bg-red-50 p-3 rounded-lg">
+              <div className="text-red-600 font-medium">월 고정지출</div>
+              <div className="font-bold text-red-800">
+                {formatCurrency(account.total_expense)}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <div className="bg-yellow-50 p-3 rounded-lg">
+              <div className="text-yellow-600 font-medium">월 비정기지출</div>
+              <div className="font-bold text-yellow-800">
+                {formatCurrency(
+                  Math.round(account.total_expense - account.total_budget / 12)
+                )}
+              </div>
+            </div>
+            <div
+              className={`p-3 rounded-lg ${
+                account.total_income -
+                  account.total_expense -
+                  account.total_budget / 12 >
+                0
+                  ? "bg-blue-50"
+                  : "bg-red-50"
+              }`}
+            >
+              <div
+                className={`font-medium ${
+                  account.total_income -
+                    account.total_expense -
+                    account.total_budget / 12 >
+                  0
+                    ? "text-blue-600"
+                    : "text-red-600"
+                }`}
+              >
+                잉여자금
+              </div>
+              <div
+                className={`font-bold ${
+                  account.total_income -
+                    account.total_expense -
+                    account.total_budget / 12 >
+                  0
+                    ? "text-blue-800"
+                    : "text-red-800"
+                }`}
+              >
+                {formatCurrency(
+                  Math.round(
+                    account.total_income -
+                      account.total_expense -
+                      account.total_budget / 12
+                  )
+                )}
+              </div>
+            </div>
+          </div>
 
-      {/* 저축 계획 요약 */}
-      {savingsGoal && (
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="p-4 rounded-xl shadow-none border gap-2">
-            <div className="flex items-center space-x-2 mb-2">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-sm text-muted-foreground">
-                월 저축 가능
-              </span>
-            </div>
-            <div className="text-lg font-bold">
-              {formatCurrency(account.total_savings)}
-            </div>
-          </Card>
-          <Card className="p-4 rounded-xl shadow-none border gap-2">
-            <div className="flex items-center space-x-2 mb-2">
-              <Calendar className="size-4" />
-              <span className="text-sm text-muted-foreground">
-                목표 달성까지
-              </span>
-            </div>
-            <div className="text-lg font-bold">
-              {Math.ceil(
-                (savingsGoal.goal_amount - savingsGoal.current_amount) /
-                  account.total_savings
-              )}
-              개월
-            </div>
-          </Card>
-        </div>
-      )}
-      {!savingsGoal && (
-        <div className="flex justify-center items-center h-full">
-          <p className="text-sm text-muted-foreground">
-            저축 목표를 설정해주세요.
-          </p>
-        </div>
-      )}
+          {account.total_income -
+            account.total_expense -
+            account.total_budget / 12 !==
+            0 && (
+            <Alert
+              className={
+                account.total_income -
+                  account.total_expense -
+                  account.total_budget / 12 <
+                0
+                  ? "border-red-200 bg-red-50"
+                  : "border-green-200 bg-green-50"
+              }
+            >
+              <AlertDescription
+                className={
+                  account.total_income -
+                    account.total_expense -
+                    account.total_budget / 12 <
+                  0
+                    ? "text-red-700"
+                    : "text-green-700"
+                }
+              >
+                저축 계획 후 실제 잉여:{" "}
+                {formatCurrency(
+                  Math.round(
+                    account.total_income -
+                      account.total_expense -
+                      account.total_budget / 12
+                  )
+                )}
+                {account.total_income -
+                  account.total_expense -
+                  account.total_budget / 12 <
+                  0 && " (저축 계획을 조정해주세요)"}
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 비정기 지출 현황 */}
       <Card className="p-6 rounded-2xl shadow-none border gap-2">
         <CardHeader className="px-0">
           <CardTitle className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">비정기 지출 현황</h2>
-            <Dialog>
+            {/* <Dialog>
               <form>
                 <DialogTrigger asChild>
                   <Button variant="secondary" size="icon" className="size-8">
@@ -179,9 +185,12 @@ export default function DashboardPage({ loaderData }: Route.ComponentProps) {
                         <SelectContent className="max-h-[200px] overflow-y-auto">
                           <SelectGroup>
                             <SelectLabel>카테고리</SelectLabel>
-                            {irregularCategories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
+                            {budgets.map((budget) => (
+                              <SelectItem
+                                key={budget.budget_id}
+                                value={budget.budget_id.toString()}
+                              >
+                                {budget.name}
                               </SelectItem>
                             ))}
                           </SelectGroup>
@@ -216,7 +225,7 @@ export default function DashboardPage({ loaderData }: Route.ComponentProps) {
                   </DialogFooter>
                 </DialogContent>
               </form>
-            </Dialog>
+            </Dialog> */}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-0">
@@ -243,12 +252,45 @@ export default function DashboardPage({ loaderData }: Route.ComponentProps) {
                         : "[&>div]:bg-destructive dark:[&>div]:bg-destructive"
                     )}
                   />
+                  <div className="text-xs text-gray-600">
+                    잔여:{" "}
+                    {formatCurrency(
+                      budget.budget_amount - budget.current_amount
+                    )}{" "}
+                    ({Math.round(100 - usageRate)}%)
+                  </div>
                 </div>
               );
             })}
           </div>
         </CardContent>
       </Card>
-    </div>
+      {/* 저축 계획 카드 */}
+      {savingPlans && (
+        <Card className="p-6 rounded-2xl shadow-none border gap-2">
+          <CardHeader className="px-0">
+            <CardTitle className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">저축 계획</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-0 space-y-3">
+            {savingPlans.map((plan) => (
+              <div key={plan.goal_id} className="p-3 bg-muted rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-medium">{plan.name}</div>
+                  <div className="font-bold text-primary">
+                    <span>{formatCurrency(plan.monthly_savings)} </span>
+                    <span className="text-sm text-muted-foreground"> / 월</span>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  목표: {formatCurrency(plan.goal_amount)}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+    </main>
   );
 }
