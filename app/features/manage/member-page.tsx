@@ -39,8 +39,9 @@ import {
 } from "~/common/components/ui/alert-dialog";
 import type { Database } from "database.types";
 import { createInvitation } from "../invite/mutations";
+import MoaInvitationEmail from "react-email-starter/emails/invite-user";
+import { render } from "@react-email/render";
 import { sendEmail } from "~/lib/email";
-
 export const meta: Route.MetaFunction = () => {
   return [
     { title: "Member | MOA" },
@@ -118,22 +119,29 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     return { success: false, message: "Failed to invite member" };
   }
 
+  const html = await render(
+    <MoaInvitationEmail
+      accountName={account.name}
+      invitedByUsername={profile?.name}
+      verificationCode={inviteData.token}
+      invitationLink={`http://localhost:5173/account/${data.accountId}/verify?email=${data.email}`}
+    />
+  );
+
   const { success: emailSuccess, message: emailMessage } = await sendEmail({
     from: profile?.name
       ? `${profile?.name} via MOA <notify@mail.the-moa.top>`
       : "noreply@mail.the-moa.top",
     to: data.email,
     subject: `[MOA] ${account.name} 가계부 초대`,
-    html: `<p>You are invited to join the ${account.name} account</p>
-    <a href="http://localhost:5173/account/${data.accountId}/verify?email=${data.email}">
-    click here to join the account
-    </a>
-    <p>verification code</p><br/>
-    <p style="font-size: 16px; font-weight: bold;">${inviteData.token}</p>
-    `,
+    html,
   });
 
-  return { success: emailSuccess, message: emailMessage };
+  if (!emailSuccess) {
+    return { success: false, message: emailMessage };
+  }
+
+  return { success: true, message: "Email sent successfully" };
 };
 
 export default function MemberPage({ loaderData }: Route.ComponentProps) {
