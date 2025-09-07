@@ -69,3 +69,20 @@ export const getAccountByIdAndCreatedBy = async (
   if (error) throw new Error(error.message);
   return data;
 };
+
+export async function getInvitationsByAccountId(
+  client: SupabaseClient<Database>,
+  accountId: string
+) {
+  const { data, error } = await client
+    .from("invitations")
+    .select("*")
+    .eq("account_id", accountId)
+    .eq("status", "pending");
+
+  if (error) {
+    throw new Error(`Failed to fetch invitations: ${error.message}`);
+  }
+
+  return data;
+}

@@ -7,23 +7,19 @@ import {
   CardTitle,
 } from "~/common/components/ui/card";
 
-import { Separator } from "~/common/components/ui/separator";
-
-import { AlertCircleIcon, ChromeIcon } from "lucide-react";
+import { AlertCircleIcon } from "lucide-react";
 import { GalleryVerticalEnd } from "lucide-react";
-import { MessageCircleIcon } from "lucide-react";
 import { FormInput } from "~/common/components/form-input";
 import { Form, Link, redirect, useFetcher } from "react-router";
 import type { Route } from "./+types/verify-invite-page";
 import { makeSSRClient } from "~/supa-client";
 import {
-  getLoggedInUserEmail,
   getLoggedInUserId,
   getLoggedInUserIdWithRedirectUrl,
 } from "~/features/auth/queries";
 import { getAccountByIdAndProfileId } from "../queries";
 import { z } from "zod";
-import { acceptInvitation } from "~/features/invite/mutations";
+import { acceptInvitation } from "../mutations";
 import { joinAccount } from "../mutations";
 import {
   Alert,
