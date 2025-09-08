@@ -71,6 +71,7 @@ export default function BottomNav() {
                 "flex flex-col items-center justify-center gap-1 rounded-md px-3 py-2 text-xs transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}
+              viewTransition
             >
               <item.icon
                 className={cn(

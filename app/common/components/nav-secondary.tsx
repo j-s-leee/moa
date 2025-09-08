@@ -68,8 +68,12 @@ export function NavSecondary({
           {accounts.map((item) => (
             <SidebarMenuItem key={item.account_id}>
               <div className="flex w-full items-center">
-                <SidebarMenuButton className="flex-1">
-                  <Link to={`/account/${item.account_id}/dashboard`}>
+                <SidebarMenuButton className="flex-1" asChild>
+                  <Link
+                    to={`/account/${item.account_id}/dashboard`}
+                    onClick={() => setOpenMobile(false)}
+                    viewTransition
+                  >
                     <span>{item.name}</span>
                   </Link>
                 </SidebarMenuButton>
