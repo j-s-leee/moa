@@ -27,30 +27,6 @@ export function AppSidebar({
         url: `/account/create`,
         icon: SquarePen,
       },
-      // {
-      //   title: "설정",
-      //   url: `/settings`,
-      //   icon: Settings,
-      //   items: [
-      //     {
-      //       title: "General",
-      //       url: "#",
-      //       icon: List,
-      //     },
-      //     {
-      //       title: "Team",
-      //       url: "#",
-      //     },
-      //     {
-      //       title: "Billing",
-      //       url: "#",
-      //     },
-      //     {
-      //       title: "Limits",
-      //       url: "#",
-      //     },
-      //   ],
-      // },
     ],
   };
 
@@ -61,7 +37,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavSecondary accounts={accounts} />
+        <NavSecondary accounts={accounts} userId={profile.profile_id} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={profile} />

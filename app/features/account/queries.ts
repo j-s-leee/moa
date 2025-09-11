@@ -17,7 +17,8 @@ export const getAccountsByProfileId = async (
         total_expense,
         total_savings,
         budget_amount,
-        current_budget
+        current_budget,
+        created_by
       )
     `
     )
@@ -37,13 +38,15 @@ export const getAccountByIdAndProfileId = async (
     .from("account_members")
     .select(
       `
-      accounts!inner(
+      account_budget_list_view!inner(
       account_id,
       name,
       currency,
       total_income,
       total_expense,
       total_savings,
+      budget_amount,
+      current_budget,
       created_by
     )
     `
@@ -52,7 +55,7 @@ export const getAccountByIdAndProfileId = async (
     .eq("profile_id", profileId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return data?.accounts;
+  return data?.account_budget_list_view;
 };
 
 export const getAccountByIdAndCreatedBy = async (

@@ -1,5 +1,11 @@
 import { Form, redirect, useFetcher, useNavigation } from "react-router";
-import { ArrowLeftRight, Loader2, Send, UserRoundX } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Loader2,
+  Send,
+  ShieldUser,
+  UserRoundX,
+} from "lucide-react";
 
 import { getAccountByIdAndProfileId } from "../account/queries";
 import { makeSSRClient } from "~/supa-client";
@@ -67,6 +73,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     return redirect(`/account`);
   }
   const members = await getMembers(client, accountId);
+
   const isOwner = members.some(
     (member) => member.role === "owner" && member.profile_id === userId
   );
@@ -155,7 +162,7 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
   const { accountId, members, isOwner, invitations, account, userId } =
     loaderData;
   return (
-    <main className="px-4 py-6 h-full min-h-screen space-y-6">
+    <main className="min-h-screen space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>
@@ -184,7 +191,7 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
                   <div className="flex items-center gap-2">
                     <span>{member.profiles.name}</span>
                     {member.role === "owner" && (
-                      <Badge variant="outline">👑</Badge>
+                      <ShieldUser className="size-4 text-primary" />
                     )}
                   </div>
                   <span className="text-xs text-muted-foreground">
@@ -275,43 +282,6 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
   }) {
     return (
       <>
-        {isOwner && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <ArrowLeftRight />
-                👑
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>관리자 변경</AlertDialogTitle>
-                <AlertDialogDescription>
-                  관리자 변경하시겠습니까?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>취소</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    promoteFetcher.submit(
-                      {
-                        memberId: member.profile_id,
-                        accountId: accountId,
-                      },
-                      {
-                        method: "POST",
-                        action: "/api/member/promote",
-                      }
-                    );
-                  }}
-                >
-                  확인
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
         {(isOwner || member.profile_id === userId) && (
           <AlertDialog>
             <AlertDialogTrigger asChild>

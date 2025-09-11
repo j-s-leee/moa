@@ -1,13 +1,11 @@
 import { Card, CardContent } from "~/common/components/ui/card";
 import {
-  data,
-  Form,
   isRouteErrorResponse,
   Link,
   useFetcher,
   useNavigation,
 } from "react-router";
-import { cn, formatCurrency } from "~/lib/utils";
+import { formatCurrency } from "~/lib/utils";
 import { Progress } from "~/common/components/ui/progress";
 import { Button } from "~/common/components/ui/button";
 import { DatePicker } from "~/common/components/date-picker";
@@ -20,7 +18,7 @@ import {
   getBudgetExpensesCount,
 } from "./queries";
 import BudgetExpensePagination from "~/common/components/budget-expense-pagination";
-import { makeSSRClient, type Database } from "~/supa-client";
+import { type Database, makeSSRClient } from "~/supa-client";
 import { Input } from "~/common/components/ui/input";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createBudgetExpense, deleteBudgetExpense } from "./mutations";
@@ -233,29 +231,27 @@ export default function BudgetPage({
           >
             <ChevronLeft className="size-6" />
           </Link>
-
-          <Button variant="secondary">
-            <Link
-              to={`/account/${accountId}/budget/${budget.budget_id}/edit`}
-              className="flex items-center gap-2 hover:underline"
-            >
-              <Pencil className="size-4" />
-              수정
-            </Link>
-          </Button>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="size-4" />
-            추가
-          </Button>
-          <fetcher.Form
-            method="post"
-            action={`/account/${accountId}/budget/${budget.budget_id}/delete`}
-          >
-            <Button variant="destructive" type="submit">
-              <Trash2 className="w-4 h-4" />
-              삭제
+          <div className="flex gap-2">
+            <Button variant="secondary" asChild>
+              <Link
+                to={`/account/${accountId}/budget/${budget.budget_id}/edit`}
+                className="flex items-center hover:underline"
+              >
+                <Pencil className="size-4" />
+              </Link>
             </Button>
-          </fetcher.Form>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="size-4" />
+            </Button>
+            <fetcher.Form
+              method="post"
+              action={`/account/${accountId}/budget/${budget.budget_id}/delete`}
+            >
+              <Button variant="destructive" type="submit">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </fetcher.Form>
+          </div>
         </div>
         <div className="flex flex-col space-y-4 flex-1 min-h0">
           <Card className="w-full p-4 rounded-lg text-left border">
@@ -267,24 +263,10 @@ export default function BudgetPage({
                   {formatCurrency(budget.budget_amount)}
                 </span>
               </div>
-              <Progress
-                value={usageRate}
-                className={cn(
-                  "mb-2",
-                  remaining >= 0
-                    ? "[&>div]:bg-emerald-500 dark:[&>div]:bg-emerald-600"
-                    : "[&>div]:bg-destructive"
-                )}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
+              <Progress value={usageRate} />
+              <div className="flex justify-between text-xs text-muted-foreground pt-2">
                 <span>{usageRate.toFixed(1)}% 사용</span>
-                <span
-                  className={
-                    remaining >= 0
-                      ? "text-emerald-500 dark:text-emerald-600"
-                      : "text-destructive"
-                  }
-                >
+                <span className="text-primary">
                   {remaining >= 0 ? "잔여" : "초과"}:{" "}
                   {formatCurrency(Math.abs(remaining))}
                 </span>
@@ -296,11 +278,7 @@ export default function BudgetPage({
               <DialogHeader>
                 <DialogTitle>새 지출 추가</DialogTitle>
               </DialogHeader>
-              <fetcher.Form
-                ref={ref}
-                className="flex flex-col gap-3 border rounded-lg p-4"
-                method="post"
-              >
+              <fetcher.Form ref={ref} className="space-y-6" method="post">
                 <input type="hidden" name="_method" value="CREATE" />
                 <Input name="amount" type="number" placeholder="금액" />
                 {fieldErrors?.amount && (
@@ -314,12 +292,6 @@ export default function BudgetPage({
                     {fieldErrors.note}
                   </span>
                 )}
-                {/* <Input
-                  name="date"
-                  type="date"
-                  placeholder="날짜"
-                  defaultValue={new Date().toISOString().split("T")[0]}
-                /> */}
                 <DatePicker
                   label=""
                   id="date"
@@ -348,18 +320,13 @@ export default function BudgetPage({
               </fetcher.Form>
             </DialogContent>
           </Dialog>
-          {/* 
-          <ExpenseFormDialog
-            open={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-          /> */}
 
           <div className="flex-1 flex flex-col min-h-0">
             <div className="space-y-3 overflow-auto flex-1">
               {expenses?.map((expense) => (
                 <div
                   key={expense.budget_expense_id}
-                  className="flex items-center justify-between p-3 rounded-lg border-none bg-muted/60 dark:bg-muted/80"
+                  className="flex items-center justify-between p-3 rounded-lg border-none bg-muted/50"
                 >
                   <div>
                     <div className="font-medium">{expense.note}</div>
@@ -379,9 +346,8 @@ export default function BudgetPage({
                 </div>
               ))}
             </div>
-
-            <BudgetExpensePagination totalPages={totalPages} />
           </div>
+          <BudgetExpensePagination totalPages={totalPages} />
         </div>
       </div>
     </main>

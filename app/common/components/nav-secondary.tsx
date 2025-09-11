@@ -23,9 +23,11 @@ import { toast } from "sonner";
 
 export function NavSecondary({
   accounts,
+  userId,
   ...props
 }: {
   accounts: Account[];
+  userId: string;
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const { isMobile, setOpenMobile } = useSidebar();
   const fetcher = useFetcher();
@@ -93,26 +95,32 @@ export function NavSecondary({
                     align={isMobile ? "end" : "start"}
                     className="min-w-56 rounded-lg"
                   >
-                    <DropdownMenuItem asChild>
-                      <Link to={`/account/${item.account_id}/edit`}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        <span>이름 바꾸기</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    {item.created_by === userId && (
+                      <DropdownMenuItem asChild>
+                        <Link to={`/account/${item.account_id}/edit`}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          <span>이름 바꾸기</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link to={`/account/${item.account_id}/member`}>
                         <Users className="mr-2 h-4 w-4" />
                         <span>멤버 관리</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => onClickDelete(item.account_id)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                      <span>삭제</span>
-                    </DropdownMenuItem>
+                    {item.created_by === userId && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => onClickDelete(item.account_id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                          <span>삭제</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
