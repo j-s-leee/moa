@@ -9,7 +9,8 @@ SELECT
     accounts.total_expense,
     accounts.total_savings,
     sum(budgets.current_amount) as current_budget,
-    sum(budgets.budget_amount) as budget_amount
+    sum(budgets.budget_amount) as budget_amount,
+    accounts.created_by
 FROM accounts
 LEFT JOIN budgets USING (account_id)
 GROUP BY accounts.account_id;

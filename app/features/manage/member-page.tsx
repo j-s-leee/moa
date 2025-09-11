@@ -1,5 +1,11 @@
-import { Form, redirect, useFetcher } from "react-router";
-import { ArrowLeftRight, Send, UserRoundX } from "lucide-react";
+import { Form, redirect, useFetcher, useNavigation } from "react-router";
+import {
+  ArrowLeftRight,
+  Loader2,
+  Send,
+  ShieldUser,
+  UserRoundX,
+} from "lucide-react";
 
 import { getAccountByIdAndProfileId } from "../account/queries";
 import { makeSSRClient } from "~/supa-client";
@@ -13,7 +19,7 @@ import { Button } from "~/common/components/ui/button";
 import { getAccount, getMembers } from "./queries";
 import { Badge } from "~/common/components/ui/badge";
 import type { Route } from "./+types/member-page";
-import { getInvitationsByAccountId } from "../invite/queries";
+import { getInvitationsByAccountId } from "../account/queries";
 import {
   Card,
   CardContent,
@@ -38,7 +44,7 @@ import {
   AlertDialogTrigger,
 } from "~/common/components/ui/alert-dialog";
 import type { Database } from "database.types";
-import { createInvitation } from "../invite/mutations";
+import { createInvitation } from "../account/mutations";
 import MoaInvitationEmail from "react-email-starter/emails/invite-user";
 import { render } from "@react-email/render";
 import { sendEmail } from "~/lib/email";
@@ -67,6 +73,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     return redirect(`/account`);
   }
   const members = await getMembers(client, accountId);
+
   const isOwner = members.some(
     (member) => member.role === "owner" && member.profile_id === userId
   );
@@ -148,13 +155,14 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
   const promoteFetcher = useFetcher();
   const revokeFetcher = useFetcher();
   const revokeInviteFetcher = useFetcher();
+  const navigation = useNavigation();
 
   const inviteRef = useRef<HTMLFormElement>(null);
 
   const { accountId, members, isOwner, invitations, account, userId } =
     loaderData;
   return (
-    <main className="px-4 py-6 h-full min-h-screen space-y-6">
+    <main className="min-h-screen space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>
@@ -179,16 +187,11 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
               className="flex items-center justify-between gap-2"
             >
               <div className="flex items-center gap-4">
-                <Avatar className="size-10">
-                  <AvatarFallback>
-                    {member.profiles.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-2">
                     <span>{member.profiles.name}</span>
                     {member.role === "owner" && (
-                      <Badge variant="outline">👑</Badge>
+                      <ShieldUser className="size-4 text-primary" />
                     )}
                   </div>
                   <span className="text-xs text-muted-foreground">
@@ -212,11 +215,6 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
                 className="flex items-center justify-between gap-2"
               >
                 <div className="flex items-center gap-4">
-                  <Avatar className="size-10">
-                    <AvatarFallback>
-                      {invitation.email.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <span>{invitation.email.split("@")[0]}</span>
@@ -254,8 +252,17 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
             placeholder="moa@gmail.com"
             className="w-full"
           />
-          <Button size="icon" variant="outline" type="submit">
-            <Send />
+          <Button
+            size="icon"
+            variant="outline"
+            type="submit"
+            disabled={navigation.state === "submitting"}
+          >
+            {navigation.state === "submitting" ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Send />
+            )}
           </Button>
         </div>
       </Form>
@@ -275,43 +282,6 @@ export default function MemberPage({ loaderData }: Route.ComponentProps) {
   }) {
     return (
       <>
-        {isOwner && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <ArrowLeftRight />
-                👑
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>관리자 변경</AlertDialogTitle>
-                <AlertDialogDescription>
-                  관리자 변경하시겠습니까?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>취소</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    promoteFetcher.submit(
-                      {
-                        memberId: member.profile_id,
-                        accountId: accountId,
-                      },
-                      {
-                        method: "POST",
-                        action: "/api/member/promote",
-                      }
-                    );
-                  }}
-                >
-                  확인
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
         {(isOwner || member.profile_id === userId) && (
           <AlertDialog>
             <AlertDialogTrigger asChild>

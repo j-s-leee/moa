@@ -374,6 +374,7 @@ export type Database = {
         Row: {
           account_id: string | null
           budget_amount: number | null
+          created_by: string | null
           currency: string | null
           current_budget: number | null
           name: string | null
@@ -381,7 +382,15 @@ export type Database = {
           total_income: number | null
           total_savings: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounts_created_by_profiles_profile_id_fk"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+        ]
       }
     }
     Functions: {

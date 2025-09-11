@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { ArrowRight, Target, Trash2 } from "lucide-react";
+import { Plus, Target, Trash2 } from "lucide-react";
 
 import { formatCurrency } from "~/lib/utils";
 import {
@@ -7,18 +6,18 @@ import {
   CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "~/common/components/ui/card";
 import type { Route } from "./+types/goal-page";
-import { data, Form, Link, useFetcher, type MetaFunction } from "react-router";
-import { getSavings, getSavingsGoal } from "./queries";
-import { getAccount } from "../manage/queries";
+import { data, Link, useFetcher, type MetaFunction } from "react-router";
+import { getSavings } from "./queries";
 import { makeSSRClient } from "~/supa-client";
 import { Button } from "~/common/components/ui/button";
 import { z } from "zod";
 import { createSavingsGoal } from "./mutations";
+import { getLoggedInUserId } from "../auth/queries";
+import { getAccountByIdAndProfileId } from "../account/queries";
 
 export const meta: MetaFunction = () => {
   return [
@@ -29,8 +28,17 @@ export const meta: MetaFunction = () => {
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { client, headers } = makeSSRClient(request);
+  const userId = await getLoggedInUserId(client);
   const savingsPlans = await getSavings(client, params.accountId);
-  const account = await getAccount(client, params.accountId);
+  const account = await getAccountByIdAndProfileId(
+    client,
+    params.accountId,
+    userId
+  );
+  if (!account) {
+    throw new Error("Account not found");
+  }
+
   return data(
     {
       savingsPlans,
@@ -84,30 +92,46 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
             <Target className="w-5 h-5" />
             저축 계획
           </CardTitle>
-          <CardDescription>
-            잉여자금을 저축하여 목표를 달성해보세요.
-          </CardDescription>
+          <CardDescription>저축 계획을 세워보세요.</CardDescription>
           <CardAction>
-            <Button variant="link" asChild>
+            <Button asChild>
               <Link to={`/account/${account.account_id}/goal/edit`}>
-                목표 설정하기
+                <Plus className="w-4 h-4" />
               </Link>
             </Button>
           </CardAction>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="rounded-lg p-2 bg-muted/50 flex justify-between items-center">
-            <span>현재 잉여자금: </span>
+            <span>현재 여유 자금: </span>
             <span className="font-bold text-primary">
               {formatCurrency(
                 account.total_income -
                   account.total_expense -
                   account.total_savings -
-                  account.total_budget / 12
+                  (account.budget_amount ?? 0) / 12
               )}
             </span>
           </div>
           <div className="space-y-3">
+            {account.budget_amount !== null && account.budget_amount !== 0 && (
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="font-medium">내년 예산 준비금</div>
+                    <div className="text-sm text-muted-foreground">
+                      목표: {formatCurrency(account.budget_amount)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">월 저축액</span>
+                  <span className="font-bold text-primary">
+                    {formatCurrency(account.budget_amount / 12)}
+                  </span>
+                </div>
+              </div>
+            )}
             {savingsPlans.map((plan) => (
               <div key={plan.goal_id} className="p-3 bg-muted rounded-lg">
                 <div className="flex justify-between items-start mb-2">
@@ -146,7 +170,9 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
               <div className="flex justify-between font-bold">
                 <span>총 월 저축</span>
                 <span className="text-primary">
-                  {formatCurrency(account.total_savings)}
+                  {formatCurrency(
+                    account.total_savings + (account.budget_amount ?? 0) / 12
+                  )}
                 </span>
               </div>
             </div>

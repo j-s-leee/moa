@@ -1,13 +1,10 @@
 import { Link, useLocation } from "react-router";
 import {
-  Home,
-  CreditCard,
-  Target,
   PiggyBank,
-  BarChart3,
   WalletMinimal,
   BanknoteArrowDown,
   BanknoteArrowUp,
+  LayoutDashboard,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 
@@ -19,9 +16,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    title: "홈",
+    title: "요약",
     href: "/dashboard",
-    icon: Home,
+    icon: LayoutDashboard,
   },
   {
     title: "수입",
@@ -71,6 +68,7 @@ export default function BottomNav() {
                 "flex flex-col items-center justify-center gap-1 rounded-md px-3 py-2 text-xs transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}
+              viewTransition
             >
               <item.icon
                 className={cn(

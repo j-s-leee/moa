@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Route } from "./+types/revoke-invite";
-import { revokeInvitation } from "~/features/invite/mutations";
+import { revokeInvitation } from "~/features/account/mutations";
 import { makeSSRClient } from "~/supa-client";
 
 const schema = z.object({
