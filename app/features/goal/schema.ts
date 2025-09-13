@@ -1,29 +1,38 @@
-import { bigint, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { profiles } from "../auth/schema";
+import {
+  bigint,
+  pgPolicy,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
+import { accounts } from "../account/schema";
+import { authenticatedRole, authUid } from "drizzle-orm/supabase";
+import { sql } from "drizzle-orm";
 
-export const accounts = pgTable("accounts", {
-  account_id: uuid().primaryKey(),
-  name: text("name").notNull(),
-  currency: text("currency").notNull().default("KRW"),
-  total_income: bigint({ mode: "number" }).notNull().default(0),
-  total_expense: bigint({ mode: "number" }).notNull().default(0),
-  total_savings: bigint({ mode: "number" }).notNull().default(0),
-  created_by: uuid()
-    .references(() => profiles.profile_id, { onDelete: "cascade" })
-    .notNull(),
-  created_at: timestamp().notNull().defaultNow(),
-  updated_at: timestamp().notNull().defaultNow(),
-});
-
-export const goals = pgTable("goals", {
-  goal_id: bigint({ mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
-  account_id: uuid().references(() => accounts.account_id, {
-    onDelete: "cascade",
-  }),
-  name: text("name").notNull(),
-  goal_amount: bigint({ mode: "number" }).notNull(),
-  current_amount: bigint({ mode: "number" }).notNull().default(0),
-  goal_date: timestamp(),
-  created_at: timestamp().notNull().defaultNow(),
-  updated_at: timestamp().notNull().defaultNow(),
-});
+export const goals = pgTable(
+  "goals",
+  {
+    goal_id: bigint({ mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity(),
+    account_id: uuid().references(() => accounts.account_id, {
+      onDelete: "cascade",
+    }),
+    name: text("name").notNull(),
+    goal_amount: bigint({ mode: "number" }).notNull(),
+    current_amount: bigint({ mode: "number" }).notNull().default(0),
+    monthly_savings: bigint({ mode: "number" }).notNull().default(0),
+    goal_date: timestamp(),
+    created_at: timestamp().notNull().defaultNow(),
+    updated_at: timestamp().notNull().defaultNow(),
+  },
+  (table) => [
+    pgPolicy(`goal_full_access`, {
+      for: "all",
+      to: authenticatedRole,
+      as: "permissive",
+      using: sql`account_id IN (SELECT am.account_id FROM (account_members am JOIN profiles p ON am.profile_id = p.profile_id) WHERE p.profile_id = ${authUid})`,
+    }),
+  ]
+);

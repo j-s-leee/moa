@@ -1,6 +1,7 @@
 import { PAGE_SIZE } from "./constants";
 import type { Database } from "database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { redirect } from "react-router";
 
 export const getTotalIncome = async (
   client: SupabaseClient<Database>,
@@ -58,10 +59,13 @@ export const getAccount = async (
 ) => {
   const { data, error } = await client
     .from("accounts")
-    .select("account_id, total_income, total_expense, total_savings")
-    .eq("account_id", accountId);
-  if (error) throw new Error(error.message);
-  return data[0];
+    .select(
+      "account_id, name, currency, total_income, total_expense, total_savings, total_budget"
+    )
+    .eq("account_id", accountId)
+    .single();
+  if (error) throw redirect("/account");
+  return data;
 };
 
 export const getBudgets = async (
@@ -124,4 +128,16 @@ export const getBudgetExpensesCount = async ({
   if (error) throw new Error(error.message);
   if (!count) return 1;
   return Math.ceil(count / PAGE_SIZE);
+};
+
+export const getMembers = async (
+  client: SupabaseClient<Database>,
+  accountId: string
+) => {
+  const { data, error } = await client
+    .from("account_members")
+    .select(`profile_id, role, profiles!inner(email, name)`)
+    .eq("account_id", accountId);
+  if (error) throw new Error(error.message);
+  return data;
 };

@@ -1,22 +1,31 @@
-import { Outlet } from "react-router";
-import { AppSidebar } from "~/common/components/app-sidebar";
+import { data, Outlet } from "react-router";
+
 import { SidebarInset, SidebarProvider } from "~/common/components/ui/sidebar";
 import type { Route } from "./+types/sidebar-layout";
-import SiteHeader from "./site-header";
+import { AppSidebar } from "./app-sidebar";
+import { getProfile } from "./queries";
+import { makeSSRClient } from "~/supa-client";
+import { getLoggedInUserId } from "~/features/auth/queries";
+import MobileHeader from "./mobile-header";
+import { getAccountsByProfileId } from "~/features/account/queries";
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const { client, headers } = makeSSRClient(request);
+  const userId = await getLoggedInUserId(client);
+  const profile = await getProfile(client, userId);
+  const accounts = await getAccountsByProfileId(client, userId);
+  return data({ accounts, profile }, { headers });
+};
 
 export default function SidebarLayout({ loaderData }: Route.ComponentProps) {
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" />
+      <AppSidebar accounts={loaderData.accounts} profile={loaderData.profile} />
       <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <Outlet />
-            </div>
-          </div>
-        </div>
+        <MobileHeader name={loaderData.profile.name} />
+        <main className="px-4 py-6 pb-24">
+          <Outlet />
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -11,6 +11,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/common/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export function DatePicker({
   label,
@@ -19,6 +24,8 @@ export function DatePicker({
   placeholder,
   bgColor,
   defaultDate,
+  date,
+  setDate,
 }: {
   label: string;
   id: string;
@@ -26,39 +33,60 @@ export function DatePicker({
   placeholder: string;
   bgColor?: string;
   defaultDate?: Date;
+  date?: Date;
+  setDate?: (date: Date) => void;
 }) {
   const [open, setOpen] = React.useState(false);
-  const [date, setDate] = React.useState<Date | undefined>(defaultDate);
+
+  // 로컬 타임존을 유지하면서 YYYY-MM-DD 형식으로 변환
+  const formatDateForInput = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   return (
     <div className="flex flex-col gap-3">
-      <Label htmlFor={id} className="px-1">
-        {label}
-      </Label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+      {label && (
+        <Label htmlFor={id} className="px-1">
+          {label}
+        </Label>
+      )}
+      {/* Hidden input to submit the date value */}
+      <input
+        type="hidden"
+        name={name}
+        value={date ? formatDateForInput(date) : ""}
+      />
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
             id={id}
-            name={name}
+            type="button"
             className={`w-full justify-between font-normal ${bgColor ?? ""}`}
           >
             {date ? date.toLocaleDateString() : placeholder}
             <ChevronDownIcon />
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-auto overflow-hidden p-0"
+          align="start"
+        >
           <Calendar
             mode="single"
             selected={date}
             captionLayout="dropdown"
             onSelect={(date) => {
-              setDate(date);
+              setDate?.(date);
               setOpen(false);
             }}
+            required
           />
-        </PopoverContent>
-      </Popover>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

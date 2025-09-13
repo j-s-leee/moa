@@ -1,0 +1,1 @@
+ALTER TABLE "accounts" ADD COLUMN "total_budget" bigint DEFAULT 0 NOT NULL;

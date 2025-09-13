@@ -14,6 +14,52 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_members: {
+        Row: {
+          account_id: string
+          created_at: string
+          profile_id: string
+          role: Database["public"]["Enums"]["account_roles"]
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          profile_id: string
+          role: Database["public"]["Enums"]["account_roles"]
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          profile_id?: string
+          role?: Database["public"]["Enums"]["account_roles"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_members_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "account_members_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "account_members_profile_id_profiles_profile_id_fk"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
       accounts: {
         Row: {
           account_id: string
@@ -21,17 +67,19 @@ export type Database = {
           created_by: string
           currency: string
           name: string
+          total_budget: number
           total_expense: number
           total_income: number
           total_savings: number
           updated_at: string
         }
         Insert: {
-          account_id: string
+          account_id?: string
           created_at?: string
           created_by: string
           currency?: string
           name: string
+          total_budget?: number
           total_expense?: number
           total_income?: number
           total_savings?: number
@@ -43,6 +91,7 @@ export type Database = {
           created_by?: string
           currency?: string
           name?: string
+          total_budget?: number
           total_expense?: number
           total_income?: number
           total_savings?: number
@@ -129,6 +178,13 @@ export type Database = {
             foreignKeyName: "budgets_account_id_accounts_account_id_fk"
             columns: ["account_id"]
             isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "budgets_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["account_id"]
           },
@@ -142,6 +198,7 @@ export type Database = {
           goal_amount: number
           goal_date: string | null
           goal_id: number
+          monthly_savings: number
           name: string
           updated_at: string
         }
@@ -152,6 +209,7 @@ export type Database = {
           goal_amount: number
           goal_date?: string | null
           goal_id?: never
+          monthly_savings?: number
           name: string
           updated_at?: string
         }
@@ -162,6 +220,7 @@ export type Database = {
           goal_amount?: number
           goal_date?: string | null
           goal_id?: never
+          monthly_savings?: number
           name?: string
           updated_at?: string
         }
@@ -170,8 +229,70 @@ export type Database = {
             foreignKeyName: "goals_account_id_accounts_account_id_fk"
             columns: ["account_id"]
             isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "goals_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["account_id"]
+          },
+        ]
+      }
+      invitations: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          invitation_id: number
+          inviter_id: string | null
+          status: Database["public"]["Enums"]["invitation_status"]
+          token: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          invitation_id?: never
+          inviter_id?: string | null
+          status?: Database["public"]["Enums"]["invitation_status"]
+          token: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          invitation_id?: never
+          inviter_id?: string | null
+          status?: Database["public"]["Enums"]["invitation_status"]
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "invitations_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "invitations_inviter_id_profiles_profile_id_fk"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -235,6 +356,13 @@ export type Database = {
             foreignKeyName: "transactions_account_id_accounts_account_id_fk"
             columns: ["account_id"]
             isOneToOne: false
+            referencedRelation: "account_budget_list_view"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "transactions_account_id_accounts_account_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["account_id"]
           },
@@ -242,12 +370,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      account_budget_list_view: {
+        Row: {
+          account_id: string | null
+          budget_amount: number | null
+          created_by: string | null
+          currency: string | null
+          current_budget: number | null
+          name: string | null
+          total_expense: number | null
+          total_income: number | null
+          total_savings: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_created_by_profiles_profile_id_fk"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
     }
     Enums: {
+      account_roles: "owner" | "member"
+      invitation_status: "pending" | "consumed" | "expired"
       transaction_types: "income" | "expense"
     }
     CompositeTypes: {
@@ -376,6 +527,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_roles: ["owner", "member"],
+      invitation_status: ["pending", "consumed", "expired"],
       transaction_types: ["income", "expense"],
     },
   },

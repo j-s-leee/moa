@@ -9,10 +9,14 @@ export const getAccounts = async (client: SupabaseClient<Database>) => {
   return data;
 };
 
-export const getProfile = async (client: SupabaseClient<Database>) => {
+export const getProfile = async (
+  client: SupabaseClient<Database>,
+  userId: string
+) => {
   const { data, error } = await client
     .from("profiles")
-    .select(`name, email`)
+    .select(`*`)
+    .eq("profile_id", userId)
     .single();
   if (error) throw new Error(error.message);
   return data;

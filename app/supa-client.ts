@@ -1,10 +1,30 @@
-import type { Database } from "database.types";
+import type { Database as SupabaseDatabase } from "database.types";
 import {
   createBrowserClient,
   createServerClient,
   serializeCookieHeader,
 } from "@supabase/ssr";
 import { parseCookieHeader } from "@supabase/ssr";
+import type { MergeDeep, SetFieldType, SetNonNullable } from "type-fest";
+
+export type Database = MergeDeep<
+  SupabaseDatabase,
+  {
+    public: {
+      Views: {
+        account_budget_list_view: {
+          Row: SetFieldType<
+            SetNonNullable<
+              SupabaseDatabase["public"]["Views"]["account_budget_list_view"]["Row"]
+            >,
+            "current_budget" | "budget_amount",
+            number | null
+          >;
+        };
+      };
+    };
+  }
+>;
 
 export const browserClient = createBrowserClient<Database>(
   process.env.SUPABASE_URL!,

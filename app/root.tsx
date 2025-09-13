@@ -10,6 +10,7 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import "./custom.css";
 import { themeSessionResolver } from "./session.server";
 import {
   PreventFlashOnWrongTheme,
@@ -17,6 +18,7 @@ import {
   useTheme,
 } from "remix-themes";
 import { cn } from "./lib/utils";
+import { Toaster } from "~/common/components/ui/sonner";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -38,7 +40,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
   const [theme] = useTheme();
   const data = useRouteLoaderData<typeof loader>("root");
   return (
-    <html lang="en" className={cn(theme)}>
+    <html lang="en" className={cn(theme ?? "")}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -47,6 +49,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data?.theme)} />
       </head>
       <body>
+        <Toaster position="top-center" />
         {children}
         <ScrollRestoration />
         <Scripts />

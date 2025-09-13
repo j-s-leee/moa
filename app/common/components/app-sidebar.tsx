@@ -10,55 +10,22 @@ import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import { SidebarFooter, SidebarRail } from "./ui/sidebar";
 import { NavSecondary } from "./nav-secondary";
-
-interface Account {
-  account_id: string;
-  name: string;
-}
-
-interface Profile {
-  name: string;
-  email: string | null;
-}
+import type { Account, Profile } from "~/common/types";
 
 export function AppSidebar({
   accounts,
   profile,
   ...props
-}: React.ComponentProps<typeof Sidebar> & {
+}: {
   accounts: Account[];
   profile: Profile;
-}) {
+} & React.ComponentProps<typeof Sidebar>) {
   const data = {
     navMain: [
       {
         title: "새 가계부",
-        url: `/new`,
+        url: `/account/create`,
         icon: SquarePen,
-      },
-      {
-        title: "설정",
-        url: `/settings`,
-        icon: Settings,
-        items: [
-          {
-            title: "General",
-            url: "#",
-            icon: List,
-          },
-          {
-            title: "Team",
-            url: "#",
-          },
-          {
-            title: "Billing",
-            url: "#",
-          },
-          {
-            title: "Limits",
-            url: "#",
-          },
-        ],
       },
     ],
   };
@@ -70,7 +37,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavSecondary items={accounts} />
+        <NavSecondary accounts={accounts} userId={profile.profile_id} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={profile} />

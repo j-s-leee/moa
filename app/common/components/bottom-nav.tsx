@@ -1,12 +1,10 @@
 import { Link, useLocation } from "react-router";
 import {
-  Home,
-  CreditCard,
-  Target,
   PiggyBank,
-  Settings,
-  Calendar,
-  BarChart3,
+  WalletMinimal,
+  BanknoteArrowDown,
+  BanknoteArrowUp,
+  LayoutDashboard,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 
@@ -18,25 +16,35 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    title: "대시보드",
+    title: "요약",
     href: "/dashboard",
-    icon: Home,
+    icon: LayoutDashboard,
   },
   {
-    title: "관리",
-    href: "/manage",
-    icon: CreditCard,
+    title: "수입",
+    href: "/income",
+    icon: BanknoteArrowUp,
   },
   {
-    title: "목표",
+    title: "지출",
+    href: "/expense",
+    icon: BanknoteArrowDown,
+  },
+  {
+    title: "예산",
+    href: "/budget",
+    icon: WalletMinimal,
+  },
+  {
+    title: "저축",
     href: "/goal",
-    icon: Target,
+    icon: PiggyBank,
   },
-  {
-    title: "분석",
-    href: "/analysis",
-    icon: BarChart3,
-  },
+  // {
+  //   title: "분석",
+  //   href: "/analysis",
+  //   icon: BarChart3,
+  // },
 ];
 
 export default function BottomNav() {
@@ -46,8 +54,8 @@ export default function BottomNav() {
   const currentPath = pathSegments[3] || "";
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm safe-area-inset-bottom border-t">
-      <div className="grid h-16 grid-cols-4 items-center justify-around px-2">
+    <nav className="fixed bottom-0 left-0 right-0 bg-background safe-area-inset-bottom border-t">
+      <div className="grid h-16 grid-cols-5 items-center justify-around px-2">
         {navItems.map((item) => {
           const isActive = currentPath === item.href.replace("/", "");
           const href = `/account/${accountId}${item.href}`;
@@ -58,15 +66,14 @@ export default function BottomNav() {
               to={href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 rounded-md px-3 py-2 text-xs transition-colors",
-                isActive
-                  ? "text-white bg-emerald-500 dark:bg-emerald-600"
-                  : "text-muted-foreground hover:text-foreground"
+                isActive ? "text-primary" : "text-muted-foreground"
               )}
+              viewTransition
             >
               <item.icon
                 className={cn(
                   "h-5 w-5",
-                  isActive ? "text-white" : "text-muted-foreground"
+                  isActive ? "text-primary" : "text-muted-foreground"
                 )}
               />
               <span className="font-medium">{item.title}</span>

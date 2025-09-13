@@ -1,21 +1,23 @@
-import { useState } from "react";
-import { Target } from "lucide-react";
-import {
-  initialMonthlyExpenses,
-  irregularCategories,
-  initialMonthlyIncomes,
-  savingsGoal,
-} from "~/lib/testData";
+import { Plus, Target, Trash2 } from "lucide-react";
+
 import { formatCurrency } from "~/lib/utils";
-import { calculateMonthlySavingsPotential } from "~/lib/testData";
-import { Card } from "~/common/components/ui/card";
-import { FormInput } from "~/common/components/form-input";
-import { DatePicker } from "~/common/components/date-picker";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/common/components/ui/card";
 import type { Route } from "./+types/goal-page";
-import { data, type MetaFunction } from "react-router";
-import { getSavingsGoal } from "./queries";
-import { getAccount } from "../manage/queries";
+import { data, Link, useFetcher, type MetaFunction } from "react-router";
+import { getSavings } from "./queries";
 import { makeSSRClient } from "~/supa-client";
+import { Button } from "~/common/components/ui/button";
+import { z } from "zod";
+import { createSavingsGoal } from "./mutations";
+import { getLoggedInUserId } from "../auth/queries";
+import { getAccountByIdAndProfileId } from "../account/queries";
 
 export const meta: MetaFunction = () => {
   return [
@@ -26,14 +28,21 @@ export const meta: MetaFunction = () => {
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { client, headers } = makeSSRClient(request);
-  const savingsGoal = await getSavingsGoal(client, params.accountId);
-  const account = await getAccount(client, params.accountId);
+  const userId = await getLoggedInUserId(client);
+  const [savingsPlans, account] = await Promise.all([
+    getSavings(client, params.accountId),
+    getAccountByIdAndProfileId(client, params.accountId, userId),
+  ]);
+  if (!account) {
+    throw new Error("Account not found");
+  }
+  if (!savingsPlans) {
+    throw new Error("Savings plans not found");
+  }
+
   return data(
     {
-      initialMonthlyIncomes,
-      initialMonthlyExpenses,
-      irregularCategories,
-      savingsGoal,
+      savingsPlans,
       account,
     },
     {
@@ -42,224 +51,133 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   );
 };
 
-export default function GoalsPage({ loaderData }: Route.ComponentProps) {
-  const [editGoal, setEditGoal] = useState(false);
-  const [tempGoal, setTempGoal] = useState(loaderData.savingsGoal);
+const goalSchema = z.object({
+  name: z.string(),
+  goal_amount: z.coerce.number(),
+  current_amount: z.coerce.number(),
+  monthly_savings: z.coerce.number(),
+});
 
-  const remainingGoal =
-    loaderData.savingsGoal.goal_amount - loaderData.savingsGoal.current_amount;
-  const monthsToGoal = Math.ceil(
-    remainingGoal / loaderData.account.total_savings
+export const action = async ({ request, params }: Route.ActionArgs) => {
+  const { client } = makeSSRClient(request);
+  const formData = await request.formData();
+  const { success, data, error } = goalSchema.safeParse(
+    Object.fromEntries(formData)
   );
 
-  const saveGoal = () => {
-    setEditGoal(false);
-  };
+  if (!success) {
+    return { success: false, message: error.message };
+  }
 
-  const cancelEdit = () => {
-    setTempGoal(loaderData.savingsGoal);
-    setEditGoal(false);
-  };
+  const goal = await createSavingsGoal(client, {
+    accountId: params.accountId,
+    goalAmount: data!.goal_amount,
+    currentAmount: data!.current_amount,
+    monthlySavings: data!.monthly_savings,
+    name: data!.name,
+  });
+
+  return { success: true, message: "목표 설정 완료" };
+};
+
+export default function GoalsPage({ loaderData }: Route.ComponentProps) {
+  const { savingsPlans, account } = loaderData;
+  const fetcher = useFetcher();
 
   return (
-    <div className="space-y-6">
-      {/* 목표 설정 카드 */}
-      <Card className="bg-gradient-to-br border-none from-indigo-500 dark:from-indigo-900 to-purple-600 dark:to-purple-900 text-white p-6 gap-4 rounded-2xl shadow-lg">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">저축 목표</h2>
-          <Target className="w-6 h-6" />
-        </div>
-
-        {!editGoal ? (
-          <div className="space-y-4">
-            <div>
-              <div className="text-sm text-indigo-100 mb-1">목표 금액</div>
-              <div className="text-2xl font-bold">
-                {formatCurrency(loaderData.savingsGoal.goal_amount)}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-indigo-100 mb-1">현재 저축액</div>
-              <div className="text-xl font-semibold">
-                {formatCurrency(loaderData.savingsGoal.current_amount)}
-              </div>
-            </div>
-            {loaderData.savingsGoal.goal_date && (
-              <div>
-                <div className="text-sm text-indigo-100 mb-1">
-                  목표 달성 희망일
+    <main className="h-full min-h-screen space-y-6">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            저축 계획
+          </CardTitle>
+          <CardDescription>저축 계획을 세워보세요.</CardDescription>
+          <CardAction>
+            <Button asChild>
+              <Link to={`/account/${account.account_id}/goal/edit`}>
+                <Plus className="w-4 h-4" />
+              </Link>
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="rounded-lg p-2 bg-muted/50 flex justify-between items-center">
+            <span>현재 여유 자금: </span>
+            <span className="font-bold text-primary">
+              {formatCurrency(
+                account.total_income -
+                  account.total_expense -
+                  account.total_savings -
+                  (account.budget_amount ?? 0) / 12
+              )}
+            </span>
+          </div>
+          <div className="space-y-3">
+            {account.budget_amount !== null && account.budget_amount !== 0 && (
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="font-medium">내년 예산 준비금</div>
+                    <div className="text-sm text-muted-foreground">
+                      목표: {formatCurrency(account.budget_amount)}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-lg">
-                  {new Date(
-                    loaderData.savingsGoal.goal_date
-                  ).toLocaleDateString("ko-KR")}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">월 저축액</span>
+                  <span className="font-bold text-primary">
+                    {formatCurrency(account.budget_amount / 12)}
+                  </span>
                 </div>
               </div>
             )}
-            <button
-              onClick={() => setEditGoal(true)}
-              className="w-full bg-white/20 hover:bg-white/30 text-white py-2 px-4 rounded-lg transition-colors"
-            >
-              수정하기
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <FormInput
-                label="목표 금액"
-                type="number"
-                value={tempGoal.goal_amount}
-                onChange={(e) =>
-                  setTempGoal({
-                    ...tempGoal,
-                    goal_amount: parseInt(e.target.value) || 0,
-                  })
-                }
-                className="w-full"
-              />
-            </div>
-            <div>
-              <FormInput
-                label="현재 저축액"
-                type="number"
-                value={tempGoal.current_amount}
-                onChange={(e) =>
-                  setTempGoal({
-                    ...tempGoal,
-                    current_amount: parseInt(e.target.value) || 0,
-                  })
-                }
-                className="w-full"
-              />
-            </div>
-            <div>
-              <DatePicker
-                label="목표 달성 예정일 (선택사항)"
-                id="deadline"
-                name="deadline"
-                defaultDate={
-                  tempGoal.goal_date ? new Date(tempGoal.goal_date) : undefined
-                }
-                placeholder="목표 달성 예정일 (선택사항)"
-                bgColor="bg-transparent"
-              />
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={saveGoal}
-                className="flex-1 bg-white text-indigo-600 py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors font-medium"
-              >
-                저장
-              </button>
-              <button
-                onClick={cancelEdit}
-                className="flex-1 bg-white/20 hover:bg-white/30 text-white py-2 px-4 rounded-lg transition-colors"
-              >
-                취소
-              </button>
+            {savingsPlans.map((plan) => (
+              <div key={plan.goal_id} className="p-3 bg-muted rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="font-medium">{plan.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      목표: {formatCurrency(plan.goal_amount)}
+                    </div>
+                  </div>
+                  <fetcher.Form
+                    method="post"
+                    action={`/account/${account.account_id}/goal/${plan.goal_id}/delete`}
+                  >
+                    <Button size="sm" variant="ghost" type="submit">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </fetcher.Form>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">월 저축액</span>
+                  <span className="font-bold text-primary">
+                    {formatCurrency(plan.monthly_savings)}
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  목표 달성까지:{" "}
+                  {Math.ceil(
+                    (plan.goal_amount - plan.current_amount) /
+                      plan.monthly_savings
+                  )}
+                  개월
+                </div>
+              </div>
+            ))}
+            <div className="pt-2 border-t">
+              <div className="flex justify-between font-bold">
+                <span>총 월 저축</span>
+                <span className="text-primary">
+                  {formatCurrency(
+                    account.total_savings + (account.budget_amount ?? 0) / 12
+                  )}
+                </span>
+              </div>
             </div>
           </div>
-        )}
+        </CardContent>
       </Card>
-
-      {/* 목표 달성 계획 */}
-      <Card className="p-6 rounded-2xl shadow-sm border">
-        <h3 className="text-lg font-semibold">목표 달성 계획</h3>
-
-        <div className="space-y-4">
-          <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-            <span className="text-primary/90">월 저축 가능액</span>
-            <span className="font-semibold text-blue-600 dark:text-blue-400">
-              {formatCurrency(loaderData.account.total_savings)}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-            <span className="">남은 목표 금액</span>
-            <span className="font-semibold text-orange-600 dark:text-orange-400">
-              {formatCurrency(remainingGoal)}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-            <span className="text-primary/90">예상 달성 기간</span>
-            <span className="font-bold text-emerald-600 dark:text-emerald-400">
-              {monthsToGoal}개월
-            </span>
-          </div>
-        </div>
-      </Card>
-
-      {/* 절약 시뮬레이터 */}
-      <Card className="p-6 rounded-2xl shadow-sm border">
-        <h3 className="text-lg font-semibold">절약 시뮬레이터</h3>
-
-        <div className="space-y-3">
-          <div className="p-3 bg-muted rounded-lg">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm text-muted-foreground">
-                월 10만원 절약 시
-              </span>
-              <span className="font-semibold">
-                {Math.ceil(
-                  remainingGoal / (loaderData.account.total_savings + 100000)
-                )}
-                개월
-              </span>
-            </div>
-            <div className="text-xs text-emerald-600 dark:text-emerald-400">
-              {monthsToGoal -
-                Math.ceil(
-                  remainingGoal / (loaderData.account.total_savings + 100000)
-                )}
-              개월 단축
-            </div>
-          </div>
-
-          <div className="p-3 bg-muted rounded-lg">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm text-muted-foreground">
-                월 20만원 절약 시
-              </span>
-              <span className="font-semibold">
-                {Math.ceil(
-                  remainingGoal / (loaderData.account.total_savings + 200000)
-                )}
-                개월
-              </span>
-            </div>
-            <div className="text-xs text-emerald-600 dark:text-emerald-400">
-              {monthsToGoal -
-                Math.ceil(
-                  remainingGoal / (loaderData.account.total_savings + 200000)
-                )}
-              개월 단축
-            </div>
-          </div>
-
-          <div className="p-3 bg-muted rounded-lg">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm text-muted-foreground">
-                월 50만원 절약 시
-              </span>
-              <span className="font-semibold">
-                {Math.ceil(
-                  remainingGoal / (loaderData.account.total_savings + 500000)
-                )}
-                개월
-              </span>
-            </div>
-            <div className="text-xs text-emerald-600 dark:text-emerald-400">
-              {monthsToGoal -
-                Math.ceil(
-                  remainingGoal / (loaderData.account.total_savings + 500000)
-                )}
-              개월 단축
-            </div>
-          </div>
-        </div>
-      </Card>
-    </div>
+    </main>
   );
 }

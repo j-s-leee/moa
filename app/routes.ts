@@ -11,9 +11,15 @@ export default [
     ...prefix("/settings", [
       route("/theme", "features/settings/set-theme.tsx"),
     ]),
+    ...prefix("/member", [
+      route("/revoke", "api/member/revoke-member.tsx"),
+      route("/promote", "api/member/promote-member.tsx"),
+      route("/revoke-invite", "api/member/revoke-invite.tsx"),
+    ]),
   ]),
 
   index("features/home/home-page.tsx"),
+
   ...prefix("/auth", [
     route("/login", "features/auth/login-page.tsx"),
     ...prefix("social/:provider", [
@@ -22,18 +28,29 @@ export default [
     ]),
     route("/logout", "features/auth/logout-page.tsx"),
   ]),
-  ...prefix("/account/:accountId", [
-    ...prefix("/manage", [
-      route("/budget/add", "features/manage/budget-add-page.tsx"),
-      route("/budget/:budgetId", "features/manage/budget-page.tsx"),
-      route("/income", "features/manage/income-page.tsx"),
-      route("/expense", "features/manage/expense-page.tsx"),
+  ...prefix("/account", [
+    layout("common/components/sidebar-layout.tsx", [
+      index("features/account/accounts-page.tsx"),
     ]),
-    layout("common/components/bottom-nav-sidebar-layout.tsx", [
-      route("/dashboard", "features/dashboard/dashboard-page.tsx"),
-      route("/manage", "features/manage/manage-page.tsx"),
-      route("/goal", "features/goal/goal-page.tsx"),
-      route("/analysis", "features/analysis/analysis-page.tsx"),
+    route("/create", "features/account/page/create-account-page.tsx"),
+    route("/delete", "features/account/page/delete-account-page.tsx"),
+    ...prefix("/:accountId", [
+      route("/edit", "features/account/page/edit-account-page.tsx"),
+      route("/verify", "features/account/page/verify-invite-page.tsx"),
+      layout("common/components/bottom-nav-sidebar-layout.tsx", [
+        route("/dashboard", "features/dashboard/dashboard-page.tsx"),
+        route("/income", "features/manage/income-page.tsx"),
+        route("/expense", "features/manage/expense-page.tsx"),
+        route("/budget", "features/manage/budget-page.tsx"),
+        route("/budget/add", "features/manage/budget-add-page.tsx"),
+        route("/budget/:budgetId", "features/manage/budget-detail-page.tsx"),
+        route("/budget/:budgetId/edit", "features/manage/edit-budget-page.tsx"),
+        route("/budget/:budgetId/delete", "features/manage/delete-budget.tsx"),
+        route("/goal", "features/goal/goal-page.tsx"),
+        route("/goal/edit", "features/goal/edit-goal-page.tsx"),
+        route("/goal/:goalId/delete", "features/goal/delete-saving-goal.tsx"),
+        route("/member", "features/manage/member-page.tsx"),
+      ]),
     ]),
   ]),
 ] satisfies RouteConfig;

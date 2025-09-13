@@ -8,8 +8,10 @@ const sessionStorage = createCookieSessionStorage({
   cookie: {
     name: "theme",
     path: "/",
-    httpOnly: false,
-    sameSite: "lax",
+    httpOnly: true,
+    sameSite: "strict",
+    secure: isProduction,
+    secrets: [process.env.COOKIE_SECRET!],
   },
 });
 
