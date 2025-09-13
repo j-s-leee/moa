@@ -17,7 +17,10 @@ import { getLoggedInUserId } from "../auth/queries";
 import { getAccountByIdAndProfileId } from "../account/queries";
 
 export const meta: Route.MetaFunction = () => {
-  return [{ title: "홈 | MOA" }, { name: "description", content: "홈 페이지" }];
+  return [
+    { title: "요약 | MOA" },
+    { name: "description", content: "요약 페이지" },
+  ];
 };
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {

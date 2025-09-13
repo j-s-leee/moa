@@ -19,7 +19,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const redirectParam = url.searchParams.get("redirect");
 
   // redirect 파라미터가 있으면 완료 페이지 URL에 추가
-  const redirectTo = `http://localhost:5173/auth/social/${provider}/complete${
+  const redirectTo = `${
+    new URL(request.url).origin
+  }/auth/social/${provider}/complete${
     redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ""
   }`;
 

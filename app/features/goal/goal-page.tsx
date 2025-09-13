@@ -29,14 +29,15 @@ export const meta: MetaFunction = () => {
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { client, headers } = makeSSRClient(request);
   const userId = await getLoggedInUserId(client);
-  const savingsPlans = await getSavings(client, params.accountId);
-  const account = await getAccountByIdAndProfileId(
-    client,
-    params.accountId,
-    userId
-  );
+  const [savingsPlans, account] = await Promise.all([
+    getSavings(client, params.accountId),
+    getAccountByIdAndProfileId(client, params.accountId, userId),
+  ]);
   if (!account) {
     throw new Error("Account not found");
+  }
+  if (!savingsPlans) {
+    throw new Error("Savings plans not found");
   }
 
   return data(
@@ -58,7 +59,6 @@ const goalSchema = z.object({
 });
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-  console.log("action");
   const { client } = makeSSRClient(request);
   const formData = await request.formData();
   const { success, data, error } = goalSchema.safeParse(
@@ -89,7 +89,6 @@ export default function GoalsPage({ loaderData }: Route.ComponentProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Target className="w-5 h-5" />
             저축 계획
           </CardTitle>
           <CardDescription>저축 계획을 세워보세요.</CardDescription>
