@@ -1,0 +1,3 @@
+ALTER POLICY "account_member_insert" ON "account_members" TO authenticated WITH CHECK ((select auth.uid()) = "account_members"."profile_id");--> statement-breakpoint
+ALTER POLICY "account_member_delete" ON "account_members" TO authenticated USING ((select auth.uid()) IN (SELECT created_by FROM accounts WHERE account_id = "account_members"."account_id"));--> statement-breakpoint
+ALTER POLICY "account_member_select" ON "account_members" TO authenticated USING (true);

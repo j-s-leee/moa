@@ -1,11 +1,5 @@
 import { Form, redirect, useFetcher, useNavigation } from "react-router";
-import {
-  ArrowLeftRight,
-  Loader2,
-  Send,
-  ShieldUser,
-  UserRoundX,
-} from "lucide-react";
+import { Loader2, Send, ShieldUser, UserRoundX } from "lucide-react";
 
 import { getAccountByIdAndProfileId } from "../account/queries";
 import { makeSSRClient } from "~/supa-client";
@@ -31,7 +25,6 @@ import { useRef } from "react";
 import { z } from "zod";
 import { Input } from "~/common/components/ui/input";
 import { Separator } from "~/common/components/ui/separator";
-import { Avatar, AvatarFallback } from "~/common/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,10 +47,6 @@ export const meta: Route.MetaFunction = () => {
     { name: "description", content: "Member Page" },
   ];
 };
-
-const formSchema = z.object({
-  memberId: z.string().uuid(),
-});
 
 const inviteSchema = z.object({
   email: z.string().email(),
@@ -131,7 +120,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       accountName={account.name}
       invitedByUsername={profile?.name}
       verificationCode={inviteData.token}
-      invitationLink={`http://localhost:5173/account/${data.accountId}/verify?email=${data.email}`}
+      invitationLink={`${new URL(request.url).origin}/account/${
+        data.accountId
+      }/verify?email=${data.email}`}
     />
   );
 
@@ -152,7 +143,6 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 };
 
 export default function MemberPage({ loaderData }: Route.ComponentProps) {
-  const promoteFetcher = useFetcher();
   const revokeFetcher = useFetcher();
   const revokeInviteFetcher = useFetcher();
   const navigation = useNavigation();

@@ -27,8 +27,10 @@ export const meta: MetaFunction = () => {
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { accountId } = params;
   const { client, headers } = makeSSRClient(request);
-  const incomes = await getIncomes(client, accountId);
-  const totalIncome = await getTotalIncome(client, accountId);
+  const [incomes, totalIncome] = await Promise.all([
+    getIncomes(client, accountId),
+    getTotalIncome(client, accountId),
+  ]);
   return data({ incomes, accountId, totalIncome }, { headers });
 };
 
