@@ -1,0 +1,1 @@
+ALTER POLICY "account_update" ON "accounts" TO authenticated USING ((select auth.uid()) = "accounts"."created_by") WITH CHECK ((select auth.uid()) = "accounts"."created_by");
