@@ -1,0 +1,494 @@
+{
+  "buildManifest": {
+    "serverBundles": {
+      "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0": {
+        "id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+        "file": "build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    },
+    "routeIdToServerBundleId": {
+      "features/settings/set-theme": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "api/member/revoke-member": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "api/member/promote-member": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "api/member/revoke-invite": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/home/home-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/auth/login-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/auth/social-start-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/auth/social-complete-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/auth/logout-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/account/accounts-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/account/page/create-account-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/account/page/delete-account-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/account/page/edit-account-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/account/page/verify-invite-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/dashboard/dashboard-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/manage/income-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/manage/expense-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/manage/budget-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/manage/budget-add-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/manage/budget-detail-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/manage/edit-budget-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/manage/delete-budget": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/goal/goal-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/goal/edit-goal-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/goal/delete-saving-goal": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "features/manage/member-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+    },
+    "routes": {
+      "root": {
+        "path": "",
+        "id": "root",
+        "file": "app/root.tsx",
+        "config": {}
+      },
+      "features/settings/set-theme": {
+        "id": "features/settings/set-theme",
+        "parentId": "root",
+        "file": "app/features/settings/set-theme.tsx",
+        "path": "/api/settings/theme",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "api/member/revoke-member": {
+        "id": "api/member/revoke-member",
+        "parentId": "root",
+        "file": "app/api/member/revoke-member.tsx",
+        "path": "/api/member/revoke",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "api/member/promote-member": {
+        "id": "api/member/promote-member",
+        "parentId": "root",
+        "file": "app/api/member/promote-member.tsx",
+        "path": "/api/member/promote",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "api/member/revoke-invite": {
+        "id": "api/member/revoke-invite",
+        "parentId": "root",
+        "file": "app/api/member/revoke-invite.tsx",
+        "path": "/api/member/revoke-invite",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/home/home-page": {
+        "id": "features/home/home-page",
+        "parentId": "root",
+        "file": "app/features/home/home-page.tsx",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/auth/login-page": {
+        "id": "features/auth/login-page",
+        "parentId": "root",
+        "file": "app/features/auth/login-page.tsx",
+        "path": "/auth/login",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/auth/social-start-page": {
+        "id": "features/auth/social-start-page",
+        "parentId": "root",
+        "file": "app/features/auth/social-start-page.tsx",
+        "path": "/auth/social/:provider/start",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/auth/social-complete-page": {
+        "id": "features/auth/social-complete-page",
+        "parentId": "root",
+        "file": "app/features/auth/social-complete-page.tsx",
+        "path": "/auth/social/:provider/complete",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/auth/logout-page": {
+        "id": "features/auth/logout-page",
+        "parentId": "root",
+        "file": "app/features/auth/logout-page.tsx",
+        "path": "/auth/logout",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "common/components/sidebar-layout": {
+        "id": "common/components/sidebar-layout",
+        "parentId": "root",
+        "file": "app/common/components/sidebar-layout.tsx",
+        "config": {}
+      },
+      "features/account/accounts-page": {
+        "id": "features/account/accounts-page",
+        "parentId": "common/components/sidebar-layout",
+        "file": "app/features/account/accounts-page.tsx",
+        "path": "/account",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/account/page/create-account-page": {
+        "id": "features/account/page/create-account-page",
+        "parentId": "root",
+        "file": "app/features/account/page/create-account-page.tsx",
+        "path": "/account/create",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/account/page/delete-account-page": {
+        "id": "features/account/page/delete-account-page",
+        "parentId": "root",
+        "file": "app/features/account/page/delete-account-page.tsx",
+        "path": "/account/delete",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/account/page/edit-account-page": {
+        "id": "features/account/page/edit-account-page",
+        "parentId": "root",
+        "file": "app/features/account/page/edit-account-page.tsx",
+        "path": "/account/:accountId/edit",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/account/page/verify-invite-page": {
+        "id": "features/account/page/verify-invite-page",
+        "parentId": "root",
+        "file": "app/features/account/page/verify-invite-page.tsx",
+        "path": "/account/:accountId/verify",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "common/components/bottom-nav-sidebar-layout": {
+        "id": "common/components/bottom-nav-sidebar-layout",
+        "parentId": "root",
+        "file": "app/common/components/bottom-nav-sidebar-layout.tsx",
+        "config": {}
+      },
+      "features/dashboard/dashboard-page": {
+        "id": "features/dashboard/dashboard-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/dashboard/dashboard-page.tsx",
+        "path": "/account/:accountId/dashboard",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/manage/income-page": {
+        "id": "features/manage/income-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/manage/income-page.tsx",
+        "path": "/account/:accountId/income",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/manage/expense-page": {
+        "id": "features/manage/expense-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/manage/expense-page.tsx",
+        "path": "/account/:accountId/expense",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/manage/budget-page": {
+        "id": "features/manage/budget-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/manage/budget-page.tsx",
+        "path": "/account/:accountId/budget",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/manage/budget-add-page": {
+        "id": "features/manage/budget-add-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/manage/budget-add-page.tsx",
+        "path": "/account/:accountId/budget/add",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/manage/budget-detail-page": {
+        "id": "features/manage/budget-detail-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/manage/budget-detail-page.tsx",
+        "path": "/account/:accountId/budget/:budgetId",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/manage/edit-budget-page": {
+        "id": "features/manage/edit-budget-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/manage/edit-budget-page.tsx",
+        "path": "/account/:accountId/budget/:budgetId/edit",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/manage/delete-budget": {
+        "id": "features/manage/delete-budget",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/manage/delete-budget.tsx",
+        "path": "/account/:accountId/budget/:budgetId/delete",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/goal/goal-page": {
+        "id": "features/goal/goal-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/goal/goal-page.tsx",
+        "path": "/account/:accountId/goal",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/goal/edit-goal-page": {
+        "id": "features/goal/edit-goal-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/goal/edit-goal-page.tsx",
+        "path": "/account/:accountId/goal/edit",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/goal/delete-saving-goal": {
+        "id": "features/goal/delete-saving-goal",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/goal/delete-saving-goal.tsx",
+        "path": "/account/:accountId/goal/:goalId/delete",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "features/manage/member-page": {
+        "id": "features/manage/member-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "app/features/manage/member-page.tsx",
+        "path": "/account/:accountId/member",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    }
+  },
+  "reactRouterConfig": {
+    "appDirectory": "/Users/basilsaltbread/work/moa/app",
+    "basename": "/",
+    "buildDirectory": "/Users/basilsaltbread/work/moa/build",
+    "future": {
+      "unstable_middleware": false,
+      "unstable_optimizeDeps": false,
+      "unstable_splitRouteModules": false,
+      "unstable_subResourceIntegrity": false,
+      "unstable_viteEnvironmentApi": false
+    },
+    "routes": {
+      "root": {
+        "path": "",
+        "id": "root",
+        "file": "root.tsx"
+      },
+      "features/settings/set-theme": {
+        "id": "features/settings/set-theme",
+        "parentId": "root",
+        "file": "features/settings/set-theme.tsx",
+        "path": "/api/settings/theme"
+      },
+      "api/member/revoke-member": {
+        "id": "api/member/revoke-member",
+        "parentId": "root",
+        "file": "api/member/revoke-member.tsx",
+        "path": "/api/member/revoke"
+      },
+      "api/member/promote-member": {
+        "id": "api/member/promote-member",
+        "parentId": "root",
+        "file": "api/member/promote-member.tsx",
+        "path": "/api/member/promote"
+      },
+      "api/member/revoke-invite": {
+        "id": "api/member/revoke-invite",
+        "parentId": "root",
+        "file": "api/member/revoke-invite.tsx",
+        "path": "/api/member/revoke-invite"
+      },
+      "features/home/home-page": {
+        "id": "features/home/home-page",
+        "parentId": "root",
+        "file": "features/home/home-page.tsx",
+        "index": true
+      },
+      "features/auth/login-page": {
+        "id": "features/auth/login-page",
+        "parentId": "root",
+        "file": "features/auth/login-page.tsx",
+        "path": "/auth/login"
+      },
+      "features/auth/social-start-page": {
+        "id": "features/auth/social-start-page",
+        "parentId": "root",
+        "file": "features/auth/social-start-page.tsx",
+        "path": "/auth/social/:provider/start"
+      },
+      "features/auth/social-complete-page": {
+        "id": "features/auth/social-complete-page",
+        "parentId": "root",
+        "file": "features/auth/social-complete-page.tsx",
+        "path": "/auth/social/:provider/complete"
+      },
+      "features/auth/logout-page": {
+        "id": "features/auth/logout-page",
+        "parentId": "root",
+        "file": "features/auth/logout-page.tsx",
+        "path": "/auth/logout"
+      },
+      "common/components/sidebar-layout": {
+        "id": "common/components/sidebar-layout",
+        "parentId": "root",
+        "file": "common/components/sidebar-layout.tsx"
+      },
+      "features/account/accounts-page": {
+        "id": "features/account/accounts-page",
+        "parentId": "common/components/sidebar-layout",
+        "file": "features/account/accounts-page.tsx",
+        "path": "/account",
+        "index": true
+      },
+      "features/account/page/create-account-page": {
+        "id": "features/account/page/create-account-page",
+        "parentId": "root",
+        "file": "features/account/page/create-account-page.tsx",
+        "path": "/account/create"
+      },
+      "features/account/page/delete-account-page": {
+        "id": "features/account/page/delete-account-page",
+        "parentId": "root",
+        "file": "features/account/page/delete-account-page.tsx",
+        "path": "/account/delete"
+      },
+      "features/account/page/edit-account-page": {
+        "id": "features/account/page/edit-account-page",
+        "parentId": "root",
+        "file": "features/account/page/edit-account-page.tsx",
+        "path": "/account/:accountId/edit"
+      },
+      "features/account/page/verify-invite-page": {
+        "id": "features/account/page/verify-invite-page",
+        "parentId": "root",
+        "file": "features/account/page/verify-invite-page.tsx",
+        "path": "/account/:accountId/verify"
+      },
+      "common/components/bottom-nav-sidebar-layout": {
+        "id": "common/components/bottom-nav-sidebar-layout",
+        "parentId": "root",
+        "file": "common/components/bottom-nav-sidebar-layout.tsx"
+      },
+      "features/dashboard/dashboard-page": {
+        "id": "features/dashboard/dashboard-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/dashboard/dashboard-page.tsx",
+        "path": "/account/:accountId/dashboard"
+      },
+      "features/manage/income-page": {
+        "id": "features/manage/income-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/manage/income-page.tsx",
+        "path": "/account/:accountId/income"
+      },
+      "features/manage/expense-page": {
+        "id": "features/manage/expense-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/manage/expense-page.tsx",
+        "path": "/account/:accountId/expense"
+      },
+      "features/manage/budget-page": {
+        "id": "features/manage/budget-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/manage/budget-page.tsx",
+        "path": "/account/:accountId/budget"
+      },
+      "features/manage/budget-add-page": {
+        "id": "features/manage/budget-add-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/manage/budget-add-page.tsx",
+        "path": "/account/:accountId/budget/add"
+      },
+      "features/manage/budget-detail-page": {
+        "id": "features/manage/budget-detail-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/manage/budget-detail-page.tsx",
+        "path": "/account/:accountId/budget/:budgetId"
+      },
+      "features/manage/edit-budget-page": {
+        "id": "features/manage/edit-budget-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/manage/edit-budget-page.tsx",
+        "path": "/account/:accountId/budget/:budgetId/edit"
+      },
+      "features/manage/delete-budget": {
+        "id": "features/manage/delete-budget",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/manage/delete-budget.tsx",
+        "path": "/account/:accountId/budget/:budgetId/delete"
+      },
+      "features/goal/goal-page": {
+        "id": "features/goal/goal-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/goal/goal-page.tsx",
+        "path": "/account/:accountId/goal"
+      },
+      "features/goal/edit-goal-page": {
+        "id": "features/goal/edit-goal-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/goal/edit-goal-page.tsx",
+        "path": "/account/:accountId/goal/edit"
+      },
+      "features/goal/delete-saving-goal": {
+        "id": "features/goal/delete-saving-goal",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/goal/delete-saving-goal.tsx",
+        "path": "/account/:accountId/goal/:goalId/delete"
+      },
+      "features/manage/member-page": {
+        "id": "features/manage/member-page",
+        "parentId": "common/components/bottom-nav-sidebar-layout",
+        "file": "features/manage/member-page.tsx",
+        "path": "/account/:accountId/member"
+      }
+    },
+    "routeDiscovery": {
+      "mode": "lazy",
+      "manifestPath": "/__manifest"
+    },
+    "serverBuildFile": "index.js",
+    "serverModuleFormat": "esm",
+    "ssr": true
+  },
+  "viteConfig": {
+    "build": {
+      "assetsDir": "assets"
+    }
+  }
+}

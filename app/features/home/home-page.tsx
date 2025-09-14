@@ -248,12 +248,12 @@ export default function HomePage() {
                 className="w-full sm:w-auto text-base md:text-lg px-6 md:px-8 py-4 md:py-6"
                 asChild
               >
-                <Link to="/auth/sign-up">
+                <Link to="/auth/login">
                   무료로 시작하기
                   <ArrowRight className="ml-2 h-4 md:h-5 w-4 md:w-5" />
                 </Link>
               </Button>
-              <Button
+              {/* <Button
                 variant="outline"
                 size="lg"
                 className="w-full sm:w-auto text-base md:text-lg px-6 md:px-8 py-4 md:py-6"
@@ -263,7 +263,7 @@ export default function HomePage() {
                   대시보드 둘러보기
                   <LayoutDashboard className="ml-2 h-4 md:h-5 w-4 md:w-5" />
                 </Link>
-              </Button>
+              </Button> */}
             </div>
 
             {/* Stats */}
@@ -618,7 +618,7 @@ export default function HomePage() {
                     </li>
                   </ul>
                   <Button className="w-full mt-8" size="lg" asChild>
-                    <Link to="/auth/sign-up">프로 시작하기</Link>
+                    <Link to="/auth/login">프로 시작하기</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -674,7 +674,7 @@ export default function HomePage() {
                     size="lg"
                     asChild
                   >
-                    <Link to="/auth/sign-up">문의하기</Link>
+                    <Link to="/auth/login">문의하기</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -705,12 +705,12 @@ export default function HomePage() {
                     className="w-full sm:w-auto text-base md:text-lg px-6 md:px-8 py-4 md:py-6"
                     asChild
                   >
-                    <Link to="/auth/sign-up">
+                    <Link to="/auth/login">
                       무료로 시작하기
                       <ArrowRight className="ml-2 h-4 md:h-5 w-4 md:w-5" />
                     </Link>
                   </Button>
-                  <Button
+                  {/* <Button
                     variant="outline"
                     size="lg"
                     className="w-full sm:w-auto text-base md:text-lg px-6 md:px-8 py-4 md:py-6"
@@ -720,7 +720,7 @@ export default function HomePage() {
                       데모 둘러보기
                       <LayoutDashboard className="ml-2 h-4 md:h-5 w-4 md:w-5" />
                     </Link>
-                  </Button>
+                  </Button> */}
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-muted-foreground">
                   <div className="flex items-center space-x-2">

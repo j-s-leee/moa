@@ -46,19 +46,19 @@ export const updateAccount = async (
     accountId,
   }: { name: string; userId: string; accountId: string }
 ) => {
-  const { data, error } = await client
+  console.log("updateAccount", name, userId, accountId);
+  const { error } = await client
     .from("accounts")
-    .update({ name })
+    .update({ name: name, updated_at: new Date().toISOString() })
     .eq("account_id", accountId)
-    .eq("created_by", userId)
-    .select()
-    .single();
+    .eq("created_by", userId);
 
   if (error) {
+    console.log("updateAccount error", error);
     throw error;
   }
 
-  return data;
+  return { success: true };
 };
 
 export const joinAccount = async (

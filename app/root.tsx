@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useNavigation,
   useRouteLoaderData,
 } from "react-router";
 
@@ -19,6 +20,7 @@ import {
 } from "remix-themes";
 import { cn } from "./lib/utils";
 import { Toaster } from "~/common/components/ui/sonner";
+import { Loader } from "lucide-react";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -38,6 +40,8 @@ export const links: Route.LinksFunction = () => [
 ];
 function InnerLayout({ children }: { children: React.ReactNode }) {
   const [theme] = useTheme();
+  const navigation = useNavigation();
+  const isNavigating = Boolean(navigation.location);
   const data = useRouteLoaderData<typeof loader>("root");
   return (
     <html lang="en" className={cn(theme ?? "")}>
@@ -49,6 +53,11 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data?.theme)} />
       </head>
       <body>
+        {isNavigating && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+            <Loader className="animate-spin w-10 h-10 text-white" />
+          </div>
+        )}
         <Toaster position="top-center" />
         {children}
         <ScrollRestoration />
