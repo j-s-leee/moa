@@ -7,6 +7,7 @@ import {
   pgEnum,
   primaryKey,
   pgPolicy,
+  index,
 } from "drizzle-orm/pg-core";
 import { profiles } from "../auth/schema";
 import { authenticatedRole, authUid } from "drizzle-orm/supabase";
@@ -74,6 +75,7 @@ export const account_members = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.account_id, table.profile_id] }),
+    index("idx_account_members_profile_id").on(table.profile_id),
     pgPolicy(`account_member_insert`, {
       for: "insert",
       to: authenticatedRole,
@@ -124,6 +126,8 @@ export const invitations = pgTable(
     created_at: timestamp().notNull().defaultNow(),
   },
   (table) => [
+    index("idx_invitations_account_id").on(table.account_id),
+    index("idx_invitations_inviter_id").on(table.inviter_id),
     pgPolicy(`invitations_select`, {
       for: "select",
       to: authenticatedRole,

@@ -1,5 +1,6 @@
 import {
   bigint,
+  index,
   pgEnum,
   pgPolicy,
   pgTable,
@@ -35,6 +36,12 @@ export const transactions = pgTable(
     updated_at: timestamp().notNull().defaultNow(),
   },
   (table) => [
+    index("idx_transactions_account_id").on(table.account_id),
+    index("idx_transactions_account_type").on(table.account_id, table.type),
+    index("idx_transactions_account_occurred_at").on(
+      table.account_id,
+      table.occurred_at.desc()
+    ),
     pgPolicy(`transactions_full_access`, {
       for: "all",
       to: authenticatedRole,
@@ -60,6 +67,7 @@ export const budgets = pgTable(
     updated_at: timestamp().notNull().defaultNow(),
   },
   (table) => [
+    index("idx_budgets_account_id").on(table.account_id),
     pgPolicy(`budgets_full_access`, {
       for: "all",
       to: authenticatedRole,
@@ -85,6 +93,11 @@ export const budget_expenses = pgTable(
     updated_at: timestamp().notNull().defaultNow(),
   },
   (table) => [
+    index("idx_budget_expenses_budget_id").on(table.budget_id),
+    index("idx_budget_expenses_occurred_at").on(
+      table.budget_id,
+      table.occurred_at.desc()
+    ),
     pgPolicy(`budget_expenses_full_access`, {
       for: "all",
       to: authenticatedRole,

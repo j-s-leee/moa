@@ -177,23 +177,25 @@ export default function AccountsPage({ loaderData }: Route.ComponentProps) {
 
       {/* 계좌가 없을 때 */}
       {accounts.length === 0 && (
-        <Card className="p-8 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-              <Plus size={24} className="text-muted-foreground" />
+        <Link to="/account/create">
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                <Plus size={24} className="text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">가계부가 없습니다</h3>
+                <p className="text-muted-foreground">
+                  첫 번째 가계부를 추가하고 재정 관리를 시작해보세요
+                </p>
+              </div>
+              <Button className="flex items-center gap-2">
+                <Plus size={16} />
+                가계부 추가하기
+              </Button>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">가계부가 없습니다</h3>
-              <p className="text-muted-foreground">
-                첫 번째 가계부를 추가하고 재정 관리를 시작해보세요
-              </p>
-            </div>
-            <Button className="flex items-center gap-2">
-              <Plus size={16} />
-              가계부 추가하기
-            </Button>
-          </div>
-        </Card>
+          </Card>
+        </Link>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 import { Link } from "react-router";
-import { ThemeToggle } from "./theme-toggle";
 import { SidebarTrigger } from "./ui/sidebar";
 import { Home } from "lucide-react";
+import { AnimatedThemeToggler } from "components/magicui/animated-theme-toggler";
 
 export default function MobileHeader({
   name,
@@ -30,7 +30,7 @@ export default function MobileHeader({
               <Home className="w-4 h-4" />
             </Link>
           )}
-          <ThemeToggle />
+          <AnimatedThemeToggler size="icon" variant="ghost" />
         </div>
       </div>
     </header>

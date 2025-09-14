@@ -1,5 +1,6 @@
 import {
   bigint,
+  index,
   pgPolicy,
   pgTable,
   text,
@@ -28,6 +29,7 @@ export const goals = pgTable(
     updated_at: timestamp().notNull().defaultNow(),
   },
   (table) => [
+    index("idx_goals_account_id").on(table.account_id),
     pgPolicy(`goal_full_access`, {
       for: "all",
       to: authenticatedRole,
