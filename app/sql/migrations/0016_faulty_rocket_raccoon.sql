@@ -1,0 +1,1 @@
+ALTER POLICY "account_update" ON "accounts" TO authenticated WITH CHECK (true);

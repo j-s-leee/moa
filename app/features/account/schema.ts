@@ -40,6 +40,7 @@ export const accounts = pgTable(
       to: authenticatedRole,
       as: "permissive",
       withCheck: sql`${authUid} = ${table.created_by}`,
+      using: sql`${authUid} = ${table.created_by}`,
     }),
     pgPolicy(`account_delete`, {
       for: "delete",
