@@ -7,6 +7,7 @@ import {
   ScrollRestoration,
   useNavigation,
   useRouteLoaderData,
+  useLocation,
 } from "react-router";
 
 import type { Route } from "./+types/root";
@@ -20,7 +21,9 @@ import {
 } from "remix-themes";
 import { cn } from "./lib/utils";
 import { Toaster } from "~/common/components/ui/sonner";
-import { Loader } from "lucide-react";
+import { LoaderOne } from "components/ui/loader";
+import { ComingSoonPage } from "~/common/components/coming-soon-page";
+import { useIsMobile } from "~/hooks/use-mobile";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -55,7 +58,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
       <body>
         {isNavigating && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-            <Loader className="animate-spin w-10 h-10 text-white" />
+            <LoaderOne />
           </div>
         )}
         <Toaster position="top-center" />
@@ -86,7 +89,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+// 허용된 라우트 목록
+const ALLOWED_ROUTES = [
+  "/", // 홈페이지
+  "/auth/login", // 로그인 페이지
+  "/auth/social/google/start", // 소셜 로그인 시작
+  "/auth/social/google/complete", // 소셜 로그인 완료
+  "/auth/logout", // 로그아웃
+];
+
+function isAllowedRoute(pathname: string): boolean {
+  return ALLOWED_ROUTES.includes(pathname);
+}
+
 export default function App() {
+  const location = useLocation();
+  const isMobile = useIsMobile();
+
+  // 모바일이 아니고 허용되지 않은 라우트인 경우에만 준비중 페이지 표시
+  if (!isMobile && !isAllowedRoute(location.pathname)) {
+    return <ComingSoonPage />;
+  }
+
   return <Outlet />;
 }
 
