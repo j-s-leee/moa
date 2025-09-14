@@ -120,6 +120,20 @@
       "when": 1757825387354,
       "tag": "0017_sweet_moon_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1757858001276,
+      "tag": "0018_cute_rockslide",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1757858934970,
+      "tag": "0019_loud_spacker_dave",
+      "breakpoints": true
     }
   ]
 }

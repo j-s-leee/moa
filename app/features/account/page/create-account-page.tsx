@@ -46,7 +46,7 @@ export default function CreateAccountPage({
   actionData,
 }: Route.ComponentProps) {
   return (
-    <main className="px-4 py-6 h-full min-h-screen space-y-6">
+    <main className="px-4 py-6 h-full min-h-screen space-y-6 bg-background">
       <div className="flex items-center gap-2">
         <Link to={`/account`}>
           <ChevronLeft className="size-6" />
