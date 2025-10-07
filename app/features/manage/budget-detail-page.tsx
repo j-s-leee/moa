@@ -5,7 +5,7 @@ import {
   useFetcher,
   useNavigation,
 } from "react-router";
-import { formatCurrency } from "~/lib/utils";
+import { cn, formatCurrency } from "~/lib/utils";
 import { Progress } from "~/common/components/ui/progress";
 import { Button } from "~/common/components/ui/button";
 import { DatePicker } from "~/common/components/date-picker";
@@ -141,7 +141,6 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     return { success: false, fieldErrors: error.flatten().fieldErrors };
   }
   const _method = formData.get("_method")?.toString().toUpperCase();
-
   switch (_method) {
     case "CREATE":
       return handlePost({ client, formData, budgetId: parsedParams.budgetId });
@@ -159,7 +158,11 @@ export default function BudgetPage({
   const navigation = useNavigation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [date, setDate] = useState<Date>();
+  const [deletingExpenseIds, setDeletingExpenseIds] = useState<Set<number>>(
+    new Set()
+  );
   const fieldErrors = fetcher.data?.fieldErrors;
+  const isFetching = fetcher.state === "submitting";
 
   const { budget, expenses, page, totalPages, accountId } = loaderData;
 
@@ -185,6 +188,7 @@ export default function BudgetPage({
   const usageRate = (budget.current_amount / budget.budget_amount) * 100;
   const remaining = budget.budget_amount - budget.current_amount;
   const deleteExpense = (id: number) => {
+    setDeletingExpenseIds((prev) => new Set(prev).add(id));
     fetcher.submit(
       {
         budgetExpenseId: id,
@@ -196,24 +200,11 @@ export default function BudgetPage({
     );
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-
-    console.log(date);
-    if (date) {
-      formData.set("date", date.toISOString());
-    }
-    console.log(formData);
-    fetcher.submit(formData, {
-      method: "POST",
-    });
-  };
-
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
       ref.current?.reset();
       setIsDialogOpen(false);
+      setDeletingExpenseIds(new Set());
     }
   }, [fetcher.state, fetcher.data]);
 
@@ -280,16 +271,16 @@ export default function BudgetPage({
               </DialogHeader>
               <fetcher.Form ref={ref} className="space-y-6" method="post">
                 <input type="hidden" name="_method" value="CREATE" />
-                <Input name="amount" type="number" placeholder="금액" />
-                {fieldErrors?.amount && (
-                  <span className="text-sm text-destructive">
-                    {fieldErrors.amount}
-                  </span>
-                )}
                 <Input name="note" type="text" placeholder="설명" />
                 {fieldErrors?.note && (
                   <span className="text-sm text-destructive">
                     {fieldErrors.note}
+                  </span>
+                )}
+                <Input name="amount" type="number" placeholder="금액" />
+                {fieldErrors?.amount && (
+                  <span className="text-sm text-destructive">
+                    {fieldErrors.amount}
                   </span>
                 )}
                 <DatePicker
@@ -323,28 +314,41 @@ export default function BudgetPage({
 
           <div className="flex-1 flex flex-col min-h-0">
             <div className="space-y-3 overflow-auto flex-1">
-              {expenses?.map((expense) => (
-                <div
-                  key={expense.budget_expense_id}
-                  className="flex items-center justify-between p-3 rounded-lg border-none bg-muted/50"
-                >
-                  <div>
-                    <div className="font-medium">{expense.note}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatCurrency(expense.amount)} •{" "}
-                      {new Date(expense.occurred_at).toLocaleDateString(
-                        "ko-KR"
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => deleteExpense(expense.budget_expense_id)}
-                    className="text-destructive"
+              {expenses?.map((expense) => {
+                const isDeleting = deletingExpenseIds.has(
+                  expense.budget_expense_id
+                );
+                return (
+                  <div
+                    key={expense.budget_expense_id}
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border-none bg-muted/50 transition-opacity",
+                      isDeleting && "opacity-50"
+                    )}
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+                    <div>
+                      <div className="font-medium">{expense.note}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {formatCurrency(expense.amount)} •{" "}
+                        {new Date(expense.occurred_at).toLocaleDateString(
+                          "ko-KR"
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => deleteExpense(expense.budget_expense_id)}
+                      className="text-destructive disabled:opacity-50"
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
           <BudgetExpensePagination totalPages={totalPages} />
